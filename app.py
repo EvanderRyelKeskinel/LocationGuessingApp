@@ -1,15 +1,16 @@
-from flask import Flask, redirect, render_template, request, session, url_for
-import requests
-import sqlite3
 import json
-import random
+import sqlite3
+
+import requests
+from flask import Flask, redirect, render_template, request, session, url_for
 
 app = Flask(__name__)
 
 def create():
 	with sqlite3.connect('login.db') as db:
 		cursor = db.cursor()
-		cursor.execute(	"""	CREATE TABLE IF NOT EXISTS Users(
+		cursor.execute(	"""--sql
+				 	CREATE TABLE IF NOT EXISTS Users(
 						Username text,
 						Password text,
 						Primary Key(Username))
@@ -18,9 +19,22 @@ def create():
 	print('CREATE')
 create()
 
-@app.route('/')
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-	return render_template('index.html')
+	if request.method == "POST":
+		con = sqlite3.connect('login.db')
+		cur = con.cursor()
+		cur.execute("SELECT * FROM users WHERE username=? AND password=?",
+					(request.form['un'],request.form['pw']))
+		match = len(cur.fetchall())
+		con.close()
+		if match == 0:
+			return "wrong username and password"
+		else:
+			return "welcome " + request.form['un']
+	else:
+		return render_template('login.html')
+	
 
 @app.route('/latlong')
 def latlong():
@@ -39,37 +53,23 @@ def getlatlong():
 	return latget
 
 
-@app.route('/signup')
+@app.route('/', methods=['GET', 'POST'])
 def signup():
-	return render_template('signup.html')
+    if request.method == "POST":
+        con = sqlite3.connect("login.db")
+        cur = con.cursor()
+        cur.execute(""" INSERT INTO users (username, password)
+                VALUES (?, ?) """,
+                (request.form['un'], request.form['pw']))
+        con.commit()
+        con.close()
+        return 'signup successful'
+    else: # GET request
+        return render_template('signup.html')
 
 @app.route('/home')
 def home():
 	return render_template('home.html')
-
-@app.route('/select', methods=['post'])
-def select():
-    con = sqlite3.connect('login.db')
-    cur = con.cursor()
-    cur.execute("SELECT * FROM users WHERE username=? AND password=?",
-                    (request.form['un'],request.form['pw']))
-    match = len(cur.fetchall())
-    con.close()
-    if match == 0:
-        return "wrong username and password"
-    else:
-        return "welcome " + request.form['un']
-
-@app.route('/insert', methods=['post'])
-def insert():
-	con = sqlite3.connect("login.db")
-	cur = con.cursor()
-	cur.execute(""" INSERT INTO users (username, password)
-			VALUES (?, ?) """,
-			(request.form['un'], request.form['pw']))
-	con.commit()
-	con.close()
-	return 'signup successful'
 
 @app.route('/solo')
 def solo():
@@ -96,4 +96,5 @@ def solo():
 	
 	return render_template('solo.html', image=image)
 
-#app.run() 
+if __name__ == "__main__":
+    app.run(debug=True)
