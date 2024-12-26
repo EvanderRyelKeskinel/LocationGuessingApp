@@ -66,16 +66,14 @@
         const lat = e.lngLat.lat; 
         const lng = e.lngLat.lng;      // storing lat long values of the click event individually
         console.log(`Latitude: ${lat}, Longitude: ${lng}`);
-        const response = fetch(`/latlong?lat=${lat}&lng=${lng}`)
+        const response = fetch(`/latlong?lat=${lat}&lng=${lng}`) // sent to /solo instead of /latlong now
         
         
         marker.setLngLat([lng, lat]) // Set it to the location user clicked on
         .addTo(map); 
            
        });
-      function submit(lat, lng) {
-        
-      }
+      
       
 
       
