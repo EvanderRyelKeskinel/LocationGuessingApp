@@ -3,13 +3,13 @@ import sqlite3
 import geopy
 import requests
 import math
-from flask import Flask, redirect, render_template, request, session, url_for
+from flask import Flask, redirect, render_template, request, session, url_for, jsonify
 from geopy.distance import geodesic
 
 
 app = Flask(__name__)
-app.secret_key = 'abc123'
-
+app.secret_key = "abc"
+access_token = "MLY|7884436731651628|991d31489dc0ba2a68fd9c321c4d2cd1"
 def distance(lat1, lng1, lat2, lng2):
 	d1 = geodesic((lat1, lng1), (lat2, lng2))
 	d = (float(d1.km))
@@ -17,9 +17,10 @@ def distance(lat1, lng1, lat2, lng2):
 	return d
 
 
-def points(d):
+
+def points_calc(d):
 	points = 10000 * (math.exp(-1 * (d / 1000)) - math.exp(-1 * (20038 / 1000)))
-	return points
+	return round(points)
 
 def create():
 	with sqlite3.connect('login.db') as db:
@@ -49,19 +50,6 @@ def login():
 			return "welcome " + request.form['un']
 	else:
 		return render_template('login.html')
-	
-
-@app.route('/latlong')
-def latlong():
-	lat = request.args.get('lat')
-	lng = request.args.get('lng')
-	if lat and lng: """runs if we have values for lat and lng"""
-	session['lat'] = lat
-	session['lng'] = lng
-	
-	return redirect(url_for('solo'))
-
-
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -82,31 +70,46 @@ def signup():
 def home():
 	return render_template('home.html')
 
-@app.route('/solo')
+@app.route('/api/datapoint')
+def point_change():
+	point_change = session.get('points')
+	dictionary = {
+		'points': point_change
+	}
+	return jsonify(dictionary)
+
+
+@app.route('/solo', methods=['GET', 'POST']) #POST request now considered
 def solo():
-	base = "https://graph.mapillary.com/images?access_token=MLY|7884436731651628|991d31489dc0ba2a68fd9c321c4d2cd1&fields=id&bbox="
-	bbox1 = "-6.3872,50.3966,1.7623,55.8113"
-	bbox = "-180,-90,180,90" 
-	x = requests.get(base + bbox, params={'limit': 10})
-	parsed_data = json.loads(x.text)
-	print(parsed_data)
-	image = parsed_data['data'][0]['id']
-	print(image)
-	access_token = "MLY|7884436731651628|991d31489dc0ba2a68fd9c321c4d2cd1"
-	url = f"https://graph.mapillary.com/{image}?access_token={access_token}&fields=id,computed_geometry,detections.value"
-	y = requests.get(url, params={'limit': 1})
-	locations = json.loads(y.text)
-	lngget = locations['computed_geometry']['coordinates'][0]
-	latget = locations['computed_geometry']['coordinates'][1]
-	lat = session.get('lat', None)
-	lng = session.get('lng', None)
-	print(lat)
-	dist = distance(latget, lngget, lat, lng)
-	print(dist)
-	point = points(dist)
+	if request.method == "GET": #Get request
+		base = "https://graph.mapillary.com/images?access_token=MLY|7884436731651628|991d31489dc0ba2a68fd9c321c4d2cd1&fields=id&bbox="
+		bbox = "-180,-90,180,90"  #Select full range of possible coordinates 
+		x = requests.get(base + bbox, params={'limit': 10}) #Generate image id and limit amount of data retrieved
+		parsed_data = json.loads(x.text) #Turn into python dictionary
+		global image
+		image = parsed_data['data'][0]['id'] #Take first image ID 
+		print(image) #id of streetview image
+		return render_template('solo.html', image=image) #points sent to html 
 	
-	
-	return render_template('solo.html', image=image)
+	elif request.method == "POST": #POST request
+		url = f"https://graph.mapillary.com/{image}?access_token={access_token}&fields=id,computed_geometry,detections.value"
+		y = requests.get(url, params={'limit': 1}) #to get the coordinates of the generated image
+		locations = json.loads(y.text)
+		lngget = locations['computed_geometry']['coordinates'][0] #longitude of streetview image
+		latget = locations['computed_geometry']['coordinates'][1] #lattitude of streetview image
+		user_lat = request.args.get('lat') #lattitude that is guessed by the user 
+		user_lng = request.args.get('lng') #longitude that is guessed by the user
+		dist = distance(latget, lngget, user_lat, user_lng) #distance between the guessed coordinates and the actual coordinates
+		print(dist)
+		points = points_calc(dist)
+		session['points'] = points # session defined in POST
+		print(points)
+		
+		return render_template('solo.html', image=image, point=points) 
+	else:
+		raise ValueError("invalid")
+		
+		
 	
 if __name__ == "__main__":
     app.run(debug=True)

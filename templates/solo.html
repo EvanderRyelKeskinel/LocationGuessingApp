@@ -12,15 +12,59 @@
     var viewer = new Viewer({
       accessToken: 'MLY|7884436731651628|991d31489dc0ba2a68fd9c321c4d2cd1',
       container: 'mly', // the ID of our container defined in the HTML body
-      imageId: {{image}} 
+      imageId: {{ image }} 
     });
   </script>
  
 
  
   <body>
-    <button onclick="submit(lat, lng)"> Submit </button>
-  
+  <button id="button_solo" onclick="submit(lat, lng)"> Submit </button> <!-- Creates a button that changes function and name onclick -->
+  <script>
+  function NextRound() {
+    document.getElementById("button_solo").onclick = function () { submit(lat, lng); }; // parameters passed in
+    document.getElementById("button_solo").innerHTML = "Submit"; // changes button text and function to submit on click
+    return 
+  }
+
+  function submit(lat, lng) { // defines the submit function, which takes lat long from the marker as inputs
+    fetch(`/solo?lat=${lat}&lng=${lng}`, {method: "POST"}) // sends values to python
+    .then(function(response) {
+    }) //no response.json()
+    .then(function(data) {
+      //data not used
+      return fetch('/api/datapoint'); // second fetch called
+    })
+    .then(function(response) {
+      return response.json(); // json parses response
+    })
+    .then(function(data) {
+    document.getElementById('PointOutput').innerHTML = data.points; // change inner html to points
+  })
+    .catch(function(error) {
+        // detect errors that occur
+        console.log(error);
+    });  
+    document.getElementById("button_solo").onclick = NextRound; //changes function on button to NextRound
+    document.getElementById("button_solo").innerHTML = "Next Round"; // changes button text to "Next Round" when clicked
+    /* fetch("/api/datapoint")
+    .then(function(response) {
+        return response.json(); // 
+        // parse the response into json
+    })
+    .then(function(data) {
+      // get the data of the points
+        document.getElementById('PointOutput').innerHTML = data.points;
+    })
+    .catch(function(error) {
+        // detect errors that occur
+        console.log(error);
+    }); 
+ */
+    } 
+  </script>
+ <h2> Points: <span id = "PointOutput"> <span> </h2> 
+
   
   <html lang="en">
   <head>
@@ -45,34 +89,33 @@
   </head>
   <body>
   
+
     <!-- Create a div to hold the map -->
     <div id="map" style="position:absolute; right:138px; top:355px;"></div>
   
-    <script>
-      // Replace with your own Mapbox Access Token
-      mapboxgl.accessToken = 'pk.eyJ1IjoiZXZhbmRlcmsiLCJhIjoiY20zYnlzOTExMW10ODJucjF4eHUyejV0YyJ9.XYDcVQ3_rJLEptvGCmIT8g';
-  
-      // Create a new map
-      const map = new mapboxgl.Map({
-        container: 'map', // ID of the div where the map will be placed
-        style: 'mapbox://styles/mapbox/streets-v11', // Style of the map
-        center: [70, 60], // Longitude, Latitude (starting point of the map)
-        zoom: 1 // Zoom level (starting zoom level)
-      });
+<script>
+  // Replace with your own Mapbox Access Token
+  mapboxgl.accessToken = 'pk.eyJ1IjoiZXZhbmRlcmsiLCJhIjoiY20zYnlzOTExMW10ODJucjF4eHUyejV0YyJ9.XYDcVQ3_rJLEptvGCmIT8g';
 
-      const marker = new mapboxgl.Marker()  // Create new marker
-      // Create constants for the latitude and longitude.
-       map.on('click', function (e) {   // When clicked on the map
-        const lat = e.lngLat.lat; 
-        const lng = e.lngLat.lng;      // storing lat long values of the click event individually
-        console.log(`Latitude: ${lat}, Longitude: ${lng}`);
-        const response = fetch(`/latlong?lat=${lat}&lng=${lng}`) // sent to /solo instead of /latlong now
-        
-        
-        marker.setLngLat([lng, lat]) // Set it to the location user clicked on
-        .addTo(map); 
-           
-       });
+  // Create a new map
+  const map = new mapboxgl.Map({
+    container: 'map', // ID of the div where the map will be placed
+    style: 'mapbox://styles/mapbox/streets-v11', // Style of the map
+    center: [70, 60], // Longitude, Latitude (starting point of the map)
+    zoom: 1 // Zoom level (starting zoom level)
+  });
+
+const marker = new mapboxgl.Marker()  // Create new marker
+var lat = 0 // defines coordinates as a global variable so it can be accessed in the button with function submit(lat, lng)
+var lng = 0 // changed to variable since now the value is being changed, not created again.
+map.on('click', function (e) {   // When clicked on the map
+  lat = e.lngLat.lat; 
+  lng = e.lngLat.lng;      // storing lat long values of the click event individually
+  console.log(`Latitude: ${lat}, Longitude: ${lng}`);
+  marker.setLngLat([lng, lat]) // Set it to the location user clicked on
+  .addTo(map); 
+      
+  });
       
       
 
