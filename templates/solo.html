@@ -1,4 +1,3 @@
-
 <h1>Location guesser</h1>
 <div style="margin: 200 auto; width: 850px;"> 
 <script src="https://unpkg.com/mapillary-js@4.1.2/dist/mapillary.js"></script>
@@ -12,7 +11,7 @@
     var viewer = new Viewer({
       accessToken: 'MLY|7884436731651628|991d31489dc0ba2a68fd9c321c4d2cd1',
       container: 'mly', // the ID of our container defined in the HTML body
-      imageId: {{ image }} 
+      imageId: {{ image }}
     });
   </script>
  
@@ -30,98 +29,146 @@
   function submit(lat, lng) { // defines the submit function, which takes lat long from the marker as inputs
     fetch(`/solo?lat=${lat}&lng=${lng}`, {method: "POST"}) // sends values to python
     .then(function(response) {
-    }) //no response.json()
+      //no response.json()
+    }) 
     .then(function(data) {
       //data not used
       return fetch('/api/datapoint'); // second fetch called
+
     })
     .then(function(response) {
-      return response.json(); // json parses response
+      // json parses response
+      return response.json(); 
+
     })
     .then(function(data) {
     document.getElementById('PointOutput').innerHTML = data.points; // change inner html to points
+
+    imageMarker.setLngLat([data.image_lng, data.image_lat]); // set Imagemarker between two points
+    imageMarker.addTo(map); // add marker to map
+
+    line(data.image_lat, data.image_lng, lat, lng); //draws a line between the users marker and the image marker
   })
     .catch(function(error) {
         // detect errors that occur
         console.log(error);
     });  
+
     document.getElementById("button_solo").onclick = NextRound; //changes function on button to NextRound
     document.getElementById("button_solo").innerHTML = "Next Round"; // changes button text to "Next Round" when clicked
-    /* fetch("/api/datapoint")
-    .then(function(response) {
-        return response.json(); // 
-        // parse the response into json
-    })
-    .then(function(data) {
-      // get the data of the points
-        document.getElementById('PointOutput').innerHTML = data.points;
-    })
-    .catch(function(error) {
-        // detect errors that occur
-        console.log(error);
-    }); 
- */
     } 
-  </script>
- <h2> Points: <span id = "PointOutput"> <span> </h2> 
-
   
+</script>
+ 
+
+<h2> Points: <span id = "PointOutput"> <span> </h2> 
+
   <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapbox Example</title>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Mapbox Example</title>
+    
+      <!-- Link to Mapbox CSS -->
+      <link href="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css" rel="stylesheet" />
+    
+      <!-- Mapbox JS -->
+      <script src="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js"></script>
+    
+      <style>
+        /* Make the map take up the entire screen */
+        #map {
+          width: 20%;
+          height: 50vh;
+          margin-right: auto;
+        }
+      </style>
+    </head>
+    <body>
+    
   
-    <!-- Link to Mapbox CSS -->
-    <link href="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css" rel="stylesheet" />
+      <!-- Create a div to hold the map -->
+      <div id="map" style="position:absolute; right:138px; top:355px;"></div>
+    
+  <script>
+    // Replace with your own Mapbox Access Token
+    mapboxgl.accessToken = 'pk.eyJ1IjoiZXZhbmRlcmsiLCJhIjoiY20zYnlzOTExMW10ODJucjF4eHUyejV0YyJ9.XYDcVQ3_rJLEptvGCmIT8g';
   
-    <!-- Mapbox JS -->
-    <script src="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js"></script>
+    // Create a new map
+    const map = new mapboxgl.Map({
+      container: 'map', // ID of the div where the map will be placed
+      style: 'mapbox://styles/mapbox/streets-v11', // Style of the map
+      center: [70, 60], // Longitude, Latitude (starting point of the map)
+      zoom: 1 // Zoom level (starting zoom level)
+    });
   
-    <style>
-      /* Make the map take up the entire screen */
-      #map {
-        width: 20%;
-        height: 50vh;
-        margin-right: auto;
-      }
-    </style>
-  </head>
-  <body>
+    map.on('load', () => { //map is loaded
+          map.addSource('route', { // forms a line between points
+              'type': 'geojson',
+              'data': {
+                  'type': 'Feature',
+                  'properties': {},
+                  'geometry': {
+                      'type': 'LineString',
+                      'coordinates': [
+                           ] // no coordinates - so no line drawn
+                  }
+              }
+          });
+      
+          map.addLayer({ // for styling (ignore for now)
+              'id': 'route',
+              'type': 'line',
+              'source': 'route',
+              'layout': {
+                  'line-join': 'round',
+                  'line-cap': 'round'
+              },
+              'paint': {
+                  'line-color': '#888',
+                  'line-width': 8
+                
+              }
+          });
+        
+      });
+  function line(lat1, lng1, lat2, lng2) { //function to draw a line between two points
+    map.getSource('route').setData({ 
+      //gets the source of id 'route' and allows you to change the data
+          'type': 'Feature',
+          'properties': {},
+          'geometry': {
+              'type': 'LineString',
+              'coordinates': [
+                  [lng1, lat1], 
+                  [lng2, lat2] // coordinates added
+              ]
+          }
+      });
+  }
   
-
-    <!-- Create a div to hold the map -->
-    <div id="map" style="position:absolute; right:138px; top:355px;"></div>
   
-<script>
-  // Replace with your own Mapbox Access Token
-  mapboxgl.accessToken = 'pk.eyJ1IjoiZXZhbmRlcmsiLCJhIjoiY20zYnlzOTExMW10ODJucjF4eHUyejV0YyJ9.XYDcVQ3_rJLEptvGCmIT8g';
+  const Usermarker = new mapboxgl.Marker()  // Create marker for user
+  const imageMarker = new mapboxgl.Marker() //marker specifically for image 
+  var lat = 0 // defines coordinates as a global variable so it can be accessed in the button with function submit(lat, lng)
+  var lng = 0 // changed to variable since now the value is being changed, not created again.
+  map.on('click', function (e) {   // When clicked on the map
+    lat = e.lngLat.lat; 
+    lng = e.lngLat.lng;      // storing lat long values of the click event individually
+    console.log(`Latitude: ${lat}, Longitude: ${lng}`);
+    Usermarker.setLngLat([lng, lat]) // Set it to the location user clicked on
+    .addTo(map); 
+        
+    });
+        
+        
+  
+        
+        
+  
+      </script>
+    </body>
+    </html>
 
-  // Create a new map
-  const map = new mapboxgl.Map({
-    container: 'map', // ID of the div where the map will be placed
-    style: 'mapbox://styles/mapbox/streets-v11', // Style of the map
-    center: [70, 60], // Longitude, Latitude (starting point of the map)
-    zoom: 1 // Zoom level (starting zoom level)
-  });
-
-const marker = new mapboxgl.Marker()  // Create new marker
-var lat = 0 // defines coordinates as a global variable so it can be accessed in the button with function submit(lat, lng)
-var lng = 0 // changed to variable since now the value is being changed, not created again.
-map.on('click', function (e) {   // When clicked on the map
-  lat = e.lngLat.lat; 
-  lng = e.lngLat.lng;      // storing lat long values of the click event individually
-  console.log(`Latitude: ${lat}, Longitude: ${lng}`);
-  marker.setLngLat([lng, lat]) // Set it to the location user clicked on
-  .addTo(map); 
-      
-  });
-      
-      
-
-      
-      
-
-    </script>
-  </body>
-  </html>
+  
+  
