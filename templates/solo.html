@@ -7,6 +7,11 @@
 />
 <div id="mly" style="width: 800px; height: 600px;"></div>
 <script>
+  
+
+// Stop the form resubmission on page refresh
+
+
     var {Viewer} = mapillary;
     var viewer = new Viewer({
       accessToken: 'MLY|7884436731651628|991d31489dc0ba2a68fd9c321c4d2cd1',
@@ -23,10 +28,23 @@
   function NextRound() {
     document.getElementById("button_solo").onclick = function () { submit(lat, lng); }; // parameters passed in
     document.getElementById("button_solo").innerHTML = "Submit"; // changes button text and function to submit on click
+    fetch('/round_data', {method: "POST"}); //gets data from /round_data route
+    
+   /* .then(function(response) {
+      //json parses response
+      return response.json() 
+
+    })
+    .then(function(data) {
+      round = data.round + 1// gets the round from /round_data route
+      return fetch(`/round_data?round=${round}`, {method: "POST"})
+    });
+    console.log("reqs") */
     return 
-  }
+  } 
 
   function submit(lat, lng) { // defines the submit function, which takes lat long from the marker as inputs
+    
     fetch(`/solo?lat=${lat}&lng=${lng}`, {method: "POST"}) // sends values to python
     .then(function(response) {
       //no response.json()
@@ -48,6 +66,13 @@
     imageMarker.addTo(map); // add marker to map
 
     line(data.image_lat, data.image_lng, lat, lng); //draws a line between the users marker and the image marker
+    
+    map.fitBounds([ //Make the map zoom into the users marker and the image marker
+      [lng, lat],
+      [data.image_lng, data.image_lat] //users marker //image marker
+    ], {
+      padding: {top: 30, bottom:30, left: 30, right: 30} //padding to make both markers visible
+    });
   })
     .catch(function(error) {
         // detect errors that occur
@@ -61,7 +86,8 @@
 </script>
  
 
-<h2> Points: <span id = "PointOutput"> <span> </h2> 
+<h2> Points: <span id = "PointOutput">  <span> </h2> 
+
 
   <html lang="en">
     <head>

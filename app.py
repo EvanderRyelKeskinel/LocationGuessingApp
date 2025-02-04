@@ -18,7 +18,7 @@ def distance(lat1, lng1, lat2, lng2):
 	""" Convert geodesic datatype to float"""
 	return d
 
-
+round_count = 1 
 
 def points_calc(d):
 	points = 10000 * (math.exp(-1 * (d / 1000)) - math.exp(-1 * (20038 / 1000)))
@@ -26,20 +26,77 @@ def points_calc(d):
 
 
 def create():
-	with sqlite3.connect('App.db') as db: #Connect to the App.db database
-		cursor = db.cursor() 
-		cursor.execute(	"""--sql 
-        CREATE TABLE IF NOT EXISTS Users (
+    with sqlite3.connect('App.db') as db: #Connect to the App.db database
+        cursor = db.cursor() 
+        cursor.execute(	"""--sql 
+        CREATE TABLE IF NOT EXISTS Users ( 
         Username TEXT NOT NULL,
         SALT INTEGER, 
         Password TEXT NOT NULL, 
         Highest_solo INTEGER, 
         Highest_mult INTEGER, 
-        LobbyID TEXT, 
+        Current_LobbyID TEXT,
         InGame INTEGER, 
+        FOREIGN KEY(Current_LobbyID) REFERENCES Lobby(LobbyID),
         Primary Key(Username))
-				""") #Creates table 'Users' with several values Username as primary key
-		db.commit()
+                       """) #Creates table 'Users', with primary and foreign keys.
+        db.commit()
+        
+        cursor.execute("""--sql 
+        CREATE TABLE IF NOT EXISTS Lobby (
+        LobbyID TEXT NOT NULL, 
+        Head TEXT,
+        FOREIGN KEY(Head) REFERENCES Users(Username),
+        Primary Key(LobbyID))
+                        """) #Creates table Lobby with primary and foreign keys
+        db.commit()
+        
+        cursor.execute("""--sql
+        CREATE TABLE IF NOT EXISTS Games (
+        GameID TEXT NOT NULL, 
+        Mode TEXT NOT NULL, 
+        Region TEXT NOT NULL,
+        Image1 INTEGER, LatLong1 TEXT, 
+        Image2 INTEGER, LatLong2 TEXT, 
+        Image3 INTEGER, LatLong3 TEXT, 
+        Image4 INTEGER, LatLong4 TEXT, 
+        Image5 INTEGER, LatLong5 TEXT,
+        Primary Key(GameID),
+        FOREIGN KEY(Region) REFERENCES Regions(Region))            
+                        """) #Creates table Games with primary and foreign keys
+        db.commit()
+        cursor.execute("""--sql
+        CREATE TABLE IF NOT EXISTS Multiplayer (
+        GameID TEXT NOT NULL,
+        LobbyID TEXT NOT NULL,
+        Primary key(GameID, LobbyID),
+        FOREIGN KEY(GameID) REFERENCES Games(GameID),
+        FOREIGN KEY(LobbyID) REFERENCES Lobby(LobbyID))
+                        """) #Creates table multiplayer with composite key GameID, LobbyID
+        db.commit()
+        cursor.execute("""--sql
+        CREATE TABLE IF NOT EXISTS Attempts(
+        GameID TEXT NOT NULL,
+        Username TEXT NOT NULL,     
+        Guess1 TEXT,
+        Guess2 TEXT,
+        Guess3 TEXT,
+        Guess4 TEXT,
+        Guess5 TEXT,
+        Points INTEGER,             
+        Primary key(GameID, Username),
+        FOREIGN KEY(GameID) REFERENCES Games(GameID),         
+        FOREIGN KEY(Username) REFERENCES Users(Username))
+                       """) #Creates a table Attempts composite key GameID, Username
+        db.commit()
+        cursor.execute("""--sql
+        CREATE TABLE IF NOT EXISTS Regions(
+        Region TEXT NOT NULL,
+        BoundingBox TEXT NOT NULL,
+        Radius INTEGER NOT NULL,
+        Primary key(Region))                
+                        """) #Creates table Regions with primary key
+        db.commit()
 create()
 
 
@@ -166,51 +223,66 @@ def home():
 
 @app.route('/api/datapoint')
 def submitsend(): #function name changed to suite functionality
-	point_change = session.get('points')
-	image_lat = session.get('latget')
-	image_lng = session.get('lngget')
-	dictionary = {
+    point_change = session.get('points')
+    image_lat = session.get('latget')
+    image_lng = session.get('lngget')
+    dictionary = {
 		'points': point_change, #points in dict
 
 		'image_lat': image_lat,
 
-		'image_lng': image_lng # coordinates in dict
+		'image_lng': image_lng
+          # coordinates in dict
 	}
-	return jsonify(dictionary) #returns as JSON object
+    return jsonify(dictionary) #returns as JSON object
 
+@app.route('/round_data', methods=['POST'])
+def roundcount():
+    global round_count
+    round_count = round_count + 1
+    #if request.args.get('round'):
+    #    round = request.args.get('round')
+   # else:
+   #     round = 1
+   # 
+  #  round_dict = {
+  #      'round': round
+   # }
+    print(round_count)
+    return "."
+
+    
 
 @app.route('/solo', methods=['GET', 'POST']) #POST request now considered
 def solo():
-	if request.method == "GET": #Get request
-		base = "https://graph.mapillary.com/images?access_token=MLY|7884436731651628|991d31489dc0ba2a68fd9c321c4d2cd1&fields=id&bbox="
-		bbox = "-180,-90,180,90"  #Select full range of possible coordinates 
-		x = requests.get(base + bbox, params={'limit': 10}) #Generate image id and limit amount of data retrieved
-		parsed_data = json.loads(x.text) #Turn into python dictionary
-		global image
-		image = parsed_data['data'][0]['id'] #Take first image ID 
-		print(image) #id of streetview image
-		return render_template('solo.html', image=image) #points sent to html 
-	
-	elif request.method == "POST": #POST request
-		url = f"https://graph.mapillary.com/{image}?access_token={access_token}&fields=id,computed_geometry,detections.value"
-		y = requests.get(url, params={'limit': 1}) #to get the coordinates of the generated image
-		locations = json.loads(y.text)
-		lngget = locations['computed_geometry']['coordinates'][0] #longitude of streetview image
-		latget = locations['computed_geometry']['coordinates'][1] #lattitude of streetview image
-		print(lngget, latget) #shows coordinates of image
-		user_lat = request.args.get('lat') #lattitude that is guessed by the user 
-		user_lng = request.args.get('lng') #longitude that is guessed by the user
-		dist = distance(latget, lngget, user_lat, user_lng) #distance between the guessed coordinates and the actual coordinates
-		print(dist)
-		points = points_calc(dist)
-		session['latget'] = latget
-		session['lngget'] = lngget #Sessions for lat and lng of image
-		session['points'] = points # session defined in POST
-		print(points)
-		
-		return render_template('solo.html', image=image, point=points) 
-	else:
-		raise ValueError("invalid")
+    if request.method == "GET": #Get request
+        base = "https://graph.mapillary.com/images?access_token=MLY|7884436731651628|991d31489dc0ba2a68fd9c321c4d2cd1&fields=id&bbox="
+        bbox = "-180,-90,180,90"  #Select full range of possible coordinates 
+        x = requests.get(base + bbox, params={'limit': 10}) #Generate image id and limit amount of data retrieved
+        parsed_data = json.loads(x.text) #Turn into python dictionary
+        global image
+        image = parsed_data['data'][0]['id'] #Take first image ID 
+        print(image) #id of streetview image
+        return render_template('solo.html', image=image) #points sent to html 
+
+    elif request.method == "POST": #POST request
+        url = f"https://graph.mapillary.com/{image}?access_token={access_token}&fields=id,computed_geometry,detections.value"
+        y = requests.get(url, params={'limit': 1}) #to get the coordinates of the generated image
+        locations = json.loads(y.text)
+        lngget = locations['computed_geometry']['coordinates'][0] #longitude of streetview image
+        latget = locations['computed_geometry']['coordinates'][1] #lattitude of streetview image
+         #shows coordinates of image
+        user_lat = request.args.get('lat') #lattitude that is guessed by the user 
+        user_lng = request.args.get('lng') #longitude that is guessed by the user
+        dist = distance(latget, lngget, user_lat, user_lng) #distance between the guessed coordinates and the actual coordinates
+        points = points_calc(dist)
+        session['latget'] = latget
+        session['lngget'] = lngget #Sessions for lat and lng of image
+        session['points'] = points # session defined in POST
+
+        return render_template('solo.html', image=image, points=points) 
+    else:
+        raise ValueError("invalid")
 		
 		
 	
