@@ -23,23 +23,40 @@
 
  
   <body>
-  <button id="button_solo" onclick="submit(lat, lng)"> Submit </button> <!-- Creates a button that changes function and name onclick -->
+  <button id="button_solo" onclick="submit(lat, lng)"> Submit </button> <!-- Create button with initial function submit -->
   <script>
-  function NextRound() {
-    document.getElementById("button_solo").onclick = function () { submit(lat, lng); }; // parameters passed in
-    document.getElementById("button_solo").innerHTML = "Submit"; // changes button text and function to submit on click
-    fetch('/round_data', {method: "POST"}); //gets data from /round_data route
-    
-   /* .then(function(response) {
-      //json parses response
-      return response.json() 
+  var stage
+  function SoloButton() { // function that will change button to submit or next round
+    fetch('/stage_count', method=["GET"]) 
+    .then(function(response) {
+
+      return response.json();
 
     })
     .then(function(data) {
-      round = data.round + 1// gets the round from /round_data route
-      return fetch(`/round_data?round=${round}`, {method: "POST"})
-    });
-    console.log("reqs") */
+      var stage = data.stage
+      console.log(data.stage) 
+      if (data.stage % 2 == 0) { // if user hasn't submitted guess
+        document.getElementById("button_solo").onclick = function () { submit(lat, lng); }; 
+        document.getElementById("button_solo").innerHTML = "Submit"; // changes button text and function to submit on click
+      }
+
+      else if (data.stage % 2 == 1) { // if user has submitted guess
+        document.getElementById("button_solo").onclick = NextRound; 
+        document.getElementById("button_solo").innerHTML = "Next Round"; // changes button text and function to "Next Round" when clicked
+    } 
+
+      });
+    }
+    SoloButton() // calls every single time user refreshes url
+
+  function NextRound() {
+    document.getElementById("button_solo").onclick = function () { submit(lat, lng); }; // parameters passed in
+    document.getElementById("button_solo").innerHTML = "Submit"; // changes button text and function to submit on click
+    
+    fetch('/round_data', {method: "POST"}); //increment round_count
+    fetch('/stage_count', {method: "POST"}); //increment stage_count 
+    // by doing POST requests for both
     return 
   } 
 
@@ -60,29 +77,64 @@
 
     })
     .then(function(data) {
-    document.getElementById('PointOutput').innerHTML = data.points; // change inner html to points
+      document.getElementById('PointOutput').innerHTML = data.points; // change inner html to points
 
-    imageMarker.setLngLat([data.image_lng, data.image_lat]); // set Imagemarker between two points
-    imageMarker.addTo(map); // add marker to map
+      imageMarker.setLngLat([data.image_lng, data.image_lat]); // set Imagemarker between two points
+      imageMarker.addTo(map); // add marker to map
 
-    line(data.image_lat, data.image_lng, lat, lng); //draws a line between the users marker and the image marker
-    
-    map.fitBounds([ //Make the map zoom into the users marker and the image marker
-      [lng, lat],
-      [data.image_lng, data.image_lat] //users marker //image marker
-    ], {
-      padding: {top: 30, bottom:30, left: 30, right: 30} //padding to make both markers visible
-    });
-  })
+      line(data.image_lat, data.image_lng, lat, lng); //draws a line between the users marker and the image marker
+      
+      map.fitBounds([ //Make the map zoom into the users marker and the image marker
+          [lng, lat],
+          [data.image_lng, data.image_lat] //users marker //image marker
+        ], {
+          padding: {top: 30, bottom:30, left: 30, right: 30} //padding to make both markers visible
+      });
+      localStorage.setItem("points", data.points) 
+      localStorage.setItem('imageLat', data.image_lat)
+      localStorage.setItem("imageLng", data.image_lng)
+      // save data to local storage
+      localStorage.setItem('visuals', true); 
+      //'flag' that checks if function has been called
+    })
     .catch(function(error) {
         // detect errors that occur
         console.log(error);
     });  
-
+    
+    
+    fetch('/stage_count', {method: "POST"}); //increment stage_count
     document.getElementById("button_solo").onclick = NextRound; //changes function on button to NextRound
     document.getElementById("button_solo").innerHTML = "Next Round"; // changes button text to "Next Round" when clicked
     } 
   
+  function saveData() { //saves data when page refreshed
+    if (stage % 2 == 1) { //if user submitted guess
+      
+      if (localStorage.getItem('visuals')) {
+
+      let points = localStorage.getItem('points');  
+      let image_lat = localStorage.getItem('imageLat');
+      let image_lng = localStorage.getItem('imageLng');
+
+      document.getElementById('PointOutput').innerHTML = points; // change inner html to points
+
+      imageMarker.setLngLat([image_lng, image_lat]); // set Imagemarker between two points
+      imageMarker.addTo(map); // add marker to map
+
+      line(image_lat, image_lng, lat, lng); //draws a line between the users marker and the image marker
+      
+      map.fitBounds([ //Make the map zoom into the users marker and the image marker
+          [lng, lat],
+          [image_lng, image_lat] 
+        ], {
+          padding: {top: 30, bottom:30, left: 30, right: 30} 
+      });
+    
+    }
+
+  }
+saveData() // calls function
 </script>
  
 

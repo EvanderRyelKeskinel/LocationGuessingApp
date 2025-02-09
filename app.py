@@ -7,6 +7,7 @@ from flask import Flask, redirect, render_template, request, session, url_for, j
 from geopy.distance import geodesic
 from hashlib import sha512
 import random
+import string
 
 
 app = Flask(__name__)
@@ -18,12 +19,23 @@ def distance(lat1, lng1, lat2, lng2):
 	""" Convert geodesic datatype to float"""
 	return d
 
-round_count = 1 
+
 
 def points_calc(d):
 	points = 10000 * (math.exp(-1 * (d / 1000)) - math.exp(-1 * (20038 / 1000)))
 	return round(points)
 
+def findImage(): #gets image corresponding to current round number
+    con = sqlite3.connect("App.db")
+    cur = con.cursor()
+    image_search = cur.execute(f"SELECT Image{(round_count)} FROM Games WHERE GameID=?", (session.get('GameID'),)).fetchone() [0]
+    con.close()
+    return image_search
+
+def getImage(bbox):
+    base = "https://graph.mapillary.com/images?access_token=MLY|7884436731651628|991d31489dc0ba2a68fd9c321c4d2cd1&fields=id&bbox="
+    x = requests.get(base + bbox, params={'limit': 10})
+    return "."
 
 def create():
     with sqlite3.connect('App.db') as db: #Connect to the App.db database
@@ -54,8 +66,8 @@ def create():
         cursor.execute("""--sql
         CREATE TABLE IF NOT EXISTS Games (
         GameID TEXT NOT NULL, 
-        Mode TEXT NOT NULL, 
-        Region TEXT NOT NULL,
+        Mode TEXT, 
+        Region TEXT,
         Image1 INTEGER, LatLong1 TEXT, 
         Image2 INTEGER, LatLong2 TEXT, 
         Image3 INTEGER, LatLong3 TEXT, 
@@ -98,6 +110,20 @@ def create():
                         """) #Creates table Regions with primary key
         db.commit()
 create()
+
+#cursor.execute("""INSERT INTO 'Regions' ('Region', 'BoundingBox', 'Radius') VALUES
+#            ("Worldwide", "-180,-90,180,90", 5000),
+#            ("Ireland_AND_UK", "50.112364,-13.590088,59.160268,1.385071", 250),
+#            ("Central_Africa", "-35.243376,-17.768669,13.473103,52.161026", 2000),
+ #           ("North_Africa", "13.478111,-31.902924,34.436646,34.454498", 1500),
+#            ("Europe", "37.222127,-25.845337,69.127602,44.291382", 800),
+ #           ("North_Asia", "41.252516,31.102295,77.991763,189.870529", 2000),
+#            ("Central_Asia", "14.093957,44.648438,53.852527,145.722656",2000),
+ #           ("SouthEast_Asia", "11.015341,92.473640,29.075375,140.449219",1400),
+ #           ("North_America", "14.675268,-167.776337,84.745057,-26.799774",1800),
+ #           ("South_America", "-56.946098,-99.758949,13.650324,-29.900322",2000);""" )
+ #       db.commit() 
+
 
 
 @app.route('/login', methods = ['GET', 'POST']) #Defines a route with /login with both methods
@@ -236,36 +262,82 @@ def submitsend(): #function name changed to suite functionality
 	}
     return jsonify(dictionary) #returns as JSON object
 
-@app.route('/round_data', methods=['POST'])
+round_count = 0 # initializes round outside the function
+# session['round'] = round_count # defines session 
+
+@app.route('/round_data', methods=['POST']) # POST request called when new round started
 def roundcount():
     global round_count
-    round_count = round_count + 1
-    #if request.args.get('round'):
-    #    round = request.args.get('round')
-   # else:
-   #     round = 1
-   # 
-  #  round_dict = {
-  #      'round': round
-   # }
+    round_count = round_count + 1 # increments round
     print(round_count)
+     # session['round'] = round_count # session is updated when round_count is updated
     return "."
 
+stage_count = 0
+@app.route('/stage_count', methods=['POST', 'GET'])  
+def stagecount():
+    global stage_count #makes global so it can initialised
+    if request.method == "GET": # GET request
+        
+        dict = {
+            'stage': stage_count
+        } #defines a dictionary to be jsonified
+        return jsonify(dict)
     
+    else: # POST request 
+        stage_count = stage_count + 1 # increments by 1
+        print(stage_count)
+        return jsonify(stage_count) 
 
 @app.route('/solo', methods=['GET', 'POST']) #POST request now considered
 def solo():
-    if request.method == "GET": #Get request
-        base = "https://graph.mapillary.com/images?access_token=MLY|7884436731651628|991d31489dc0ba2a68fd9c321c4d2cd1&fields=id&bbox="
-        bbox = "-180,-90,180,90"  #Select full range of possible coordinates 
-        x = requests.get(base + bbox, params={'limit': 10}) #Generate image id and limit amount of data retrieved
-        parsed_data = json.loads(x.text) #Turn into python dictionary
-        global image
-        image = parsed_data['data'][0]['id'] #Take first image ID 
-        print(image) #id of streetview image
-        return render_template('solo.html', image=image) #points sent to html 
+    global round_count
+    
+    if not('username' in session):
+        return redirect(url_for('signup')) #if user not logged in, redirect to signup page
+    
+    elif request.method == "GET": #Get request
+        if round_count == 0:
+            GameID = random_string = ''.join(random.choices(string.ascii_letters + string.digits, k=10)) # random 10 digit string
+            session['GameID'] = GameID
+            con = sqlite3.connect("App.db") #Connect database
+            cur = con.cursor()
+
+            cur.execute("""INSERT INTO Games (GameID, Mode, Region) 
+                            VALUES (?, ?, ?)""", (GameID, "SoloRanked", "Worldwide",)) 
+            con.commit() # fill in Games table with generated GameID and mode/region
+
+            cur.execute("""INSERT INTO Attempts (GameID, Username)
+                        VALUES (?, ?)""", (GameID, session['username'],))
+            con.commit() # Fill in attempts table with gameID and Username 
+            con.close()
+
+            round_count = 1 #set round_count to 1
+            return redirect(url_for('solo')) # reload page
+        
+        elif round_count < 6: #if game hasn't ended
+            image = findImage()
+            if not(image is None):
+                return render_template('solo.html', image=image) #show page with image in round
+            else:
+                base = "https://graph.mapillary.com/images?access_token=MLY|7884436731651628|991d31489dc0ba2a68fd9c321c4d2cd1&fields=id&bbox="
+                bbox = "-180,-90,180,90"  
+                x = requests.get(base + bbox, params={'limit': 10}) 
+                #Generate image id and limit amount of data retrieved
+                
+                parsed_data = json.loads(x.text) #Turn into python dictionary
+                image = parsed_data['data'][0]['id'] #Take first image ID 
+                con = sqlite3.connect("App.db")
+                cur = con.cursor()
+                cur.execute(f"""UPDATE Games 
+                                SET image{round_count} = ?
+                                 WHERE GameID = ?""", (image, session.get("GameID"))) # adds image to current game record
+                con.commit()
+                con.close()
+                return render_template('solo.html', image=image) #show page with new image from the new round
 
     elif request.method == "POST": #POST request
+        image = findImage() #Get current image ID
         url = f"https://graph.mapillary.com/{image}?access_token={access_token}&fields=id,computed_geometry,detections.value"
         y = requests.get(url, params={'limit': 1}) #to get the coordinates of the generated image
         locations = json.loads(y.text)
