@@ -28,9 +28,11 @@ def points_calc(d):
 def findImage(): #gets image corresponding to current round number
     con = sqlite3.connect("App.db")
     cur = con.cursor()
-    image_search = cur.execute(f"SELECT Image{(round_count)} FROM Games WHERE GameID=?", (session.get('GameID'),)).fetchone() [0]
+    image_search = cur.execute(f"SELECT Image{(round_count)} FROM Games WHERE GameID=?", (session.get('GameID'),)).fetchone()
     con.close()
-    return image_search
+    if image_search is None:
+        return None
+    return image_search [0]
 
 def getImage(bbox):
     base = "https://graph.mapillary.com/images?access_token=MLY|7884436731651628|991d31489dc0ba2a68fd9c321c4d2cd1&fields=id&bbox="
@@ -263,15 +265,17 @@ def submitsend(): #function name changed to suite functionality
     return jsonify(dictionary) #returns as JSON object
 
 round_count = 0 # initializes round outside the function
-# session['round'] = round_count # defines session 
+
 
 @app.route('/round_data', methods=['POST']) # POST request called when new round started
 def roundcount():
     global round_count
-    round_count = round_count + 1 # increments round
-    print(round_count)
-     # session['round'] = round_count # session is updated when round_count is updated
-    return "."
+    round_count = round_count + 1 # round is increased by 1
+    
+    dictionary = {
+        'round': round_count # round placed in a dictionary
+    }
+    return jsonify(dictionary) #Turned into json object so it can be read by javascript.
 
 stage_count = 0
 @app.route('/stage_count', methods=['POST', 'GET'])  
@@ -346,12 +350,26 @@ def solo():
          #shows coordinates of image
         user_lat = request.args.get('lat') #lattitude that is guessed by the user 
         user_lng = request.args.get('lng') #longitude that is guessed by the user
+        
+        con = sqlite3.connect("App.db")
+        cur = con.cursor()
+        cur.execute(f"""UPDATE Games
+                    SET LatLong{round_count} = ?
+                    WHERE GameID = ?""", (str(latget) + "," + str(lngget), session.get("GameID"))) #Store image coordinates
+        con.commit()
+
+        cur.execute(f"""UPDATE Attempts
+                    SET Guess{round_count} = ?
+                    WHERE GameID = ?""", (str(user_lat) + "," + str(user_lng), session.get("GameID"))) #Store guess coordinates
+        con.commit()
+        con.close()
+
         dist = distance(latget, lngget, user_lat, user_lng) #distance between the guessed coordinates and the actual coordinates
         points = points_calc(dist)
         session['latget'] = latget
         session['lngget'] = lngget #Sessions for lat and lng of image
         session['points'] = points # session defined in POST
-
+        print(points)
         return render_template('solo.html', image=image, points=points) 
     else:
         raise ValueError("invalid")

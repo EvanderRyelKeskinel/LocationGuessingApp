@@ -25,121 +25,195 @@
   <body>
   <button id="button_solo" onclick="submit(lat, lng)"> Submit </button> <!-- Create button with initial function submit -->
   <script>
-  var stage
-  function SoloButton() { // function that will change button to submit or next round
-    fetch('/stage_count', method=["GET"]) 
-    .then(function(response) {
+ 
+function SoloButton() { // function that will change button to submit or next round
+  document.getElementById('PointOutput').innerHTML = localStorage.getItem("points");
+  fetch('/stage_count', method=["GET"]) 
+  .then(function(response) {
 
-      return response.json();
+    return response.json();
 
-    })
-    .then(function(data) {
-      var stage = data.stage
-      console.log(data.stage) 
-      if (data.stage % 2 == 0) { // if user hasn't submitted guess
-        document.getElementById("button_solo").onclick = function () { submit(lat, lng); }; 
-        document.getElementById("button_solo").innerHTML = "Submit"; // changes button text and function to submit on click
-      }
-
-      else if (data.stage % 2 == 1) { // if user has submitted guess
-        document.getElementById("button_solo").onclick = NextRound; 
-        document.getElementById("button_solo").innerHTML = "Next Round"; // changes button text and function to "Next Round" when clicked
-    } 
-
-      });
+  })
+  .then(function(data) {
+    var stage = data.stage
+    console.log(data.stage)
+    saveData(stage) // calls function that saves visuals when screen refreshed
+    if (data.stage % 2 == 0) { // if user hasn't submitted guess
+      document.getElementById("button_solo").onclick = function () { submit(lat, lng); }; 
+      document.getElementById("button_solo").innerHTML = "Submit"; // changes button text and function to submit on click
     }
-    SoloButton() // calls every single time user refreshes url
+
+    else if (data.stage % 2 == 1) { // if user has submitted guess
+      document.getElementById("button_solo").onclick = NextRound; 
+      document.getElementById("button_solo").innerHTML = "Next Round"; // changes button text and function to "Next Round" when clicked
+  } 
+
+    });
+    }
+    
+    
 
   function NextRound() {
+
+    document.getElementById("button_solo").disabled = true;
+    setTimeout(function(){document.getElementById("button_solo").disabled = false;},2000);
+
     document.getElementById("button_solo").onclick = function () { submit(lat, lng); }; // parameters passed in
     document.getElementById("button_solo").innerHTML = "Submit"; // changes button text and function to submit on click
     
-    fetch('/round_data', {method: "POST"}); //increment round_count
+    fetch('/round_data', {method: "POST"}) //increment round_count
+    .then(function(response) {
+      return response.json();
+    })
+
+    .then(function(data) {
+      console.log(`value of round received: ${data.round}`)
+      localStorage.setItem('round', data.round) //Store value of round
+      localStorage.setItem('RoundFlag', true )  //check if data has been saved
+      document.getElementById("RoundOutput").innerHTML = data.round; //Display round
+    })
+    .catch(err => {
+    console.log('error');
+    console.log(err);
+    });
+    
     fetch('/stage_count', {method: "POST"}); //increment stage_count 
     // by doing POST requests for both
+    
+    if (localStorage.getItem("visuals")) { //if items are in local storage
+      localStorage.removeItem("imageLat")
+      localStorage.removeItem("imageLng")
+      localStorage.removeItem("UserLat")
+      localStorage.removeItem("UserLng")
+      localStorage.removeItem("visuals")
+     }
+    //remove all values stored
+     location.reload() //reloads page
     return 
   } 
 
-  function submit(lat, lng) { // defines the submit function, which takes lat long from the marker as inputs
-    
-    fetch(`/solo?lat=${lat}&lng=${lng}`, {method: "POST"}) // sends values to python
-    .then(function(response) {
-      //no response.json()
-    }) 
-    .then(function(data) {
-      //data not used
-      return fetch('/api/datapoint'); // second fetch called
-
-    })
-    .then(function(response) {
-      // json parses response
-      return response.json(); 
-
-    })
-    .then(function(data) {
-      document.getElementById('PointOutput').innerHTML = data.points; // change inner html to points
-
-      imageMarker.setLngLat([data.image_lng, data.image_lat]); // set Imagemarker between two points
-      imageMarker.addTo(map); // add marker to map
-
-      line(data.image_lat, data.image_lng, lat, lng); //draws a line between the users marker and the image marker
-      
-      map.fitBounds([ //Make the map zoom into the users marker and the image marker
-          [lng, lat],
-          [data.image_lng, data.image_lat] //users marker //image marker
-        ], {
-          padding: {top: 30, bottom:30, left: 30, right: 30} //padding to make both markers visible
-      });
-      localStorage.setItem("points", data.points) 
-      localStorage.setItem('imageLat', data.image_lat)
-      localStorage.setItem("imageLng", data.image_lng)
-      // save data to local storage
-      localStorage.setItem('visuals', true); 
-      //'flag' that checks if function has been called
-    })
-    .catch(function(error) {
-        // detect errors that occur
-        console.log(error);
-    });  
-    
-    
-    fetch('/stage_count', {method: "POST"}); //increment stage_count
-    document.getElementById("button_solo").onclick = NextRound; //changes function on button to NextRound
-    document.getElementById("button_solo").innerHTML = "Next Round"; // changes button text to "Next Round" when clicked
-    } 
+function submit(lat, lng) { // defines the submit function, which takes lat long from the marker as inputs
   
-  function saveData() { //saves data when page refreshed
-    if (stage % 2 == 1) { //if user submitted guess
-      
-      if (localStorage.getItem('visuals')) {
+  document.getElementById("button_solo").disabled = true;
+  setTimeout(function(){document.getElementById("button_solo").disabled = false;},2000); 
+  //disable button for a second
+  
+  fetch(`/solo?lat=${lat}&lng=${lng}`, {method: "POST"}) // sends values to python
+  .then(function(response) {
+    //no response.json()
+  }) 
+  .then(function(data) {
+    //data not used
+    return fetch('/api/datapoint'); 
+    // second fetch called
+  })
+  .then(function(response) {
+    // json parses response
+    return response.json(); 
 
-      let points = localStorage.getItem('points');  
-      let image_lat = localStorage.getItem('imageLat');
-      let image_lng = localStorage.getItem('imageLng');
+  })
+  .then(function(data) {
+    imageMarker.setLngLat([data.image_lng, data.image_lat]); // set Imagemarker between two points
+    imageMarker.addTo(map); // add marker to map
 
-      document.getElementById('PointOutput').innerHTML = points; // change inner html to points
+    line(data.image_lat, data.image_lng, lat, lng); 
+    //draws a line between the users marker and the image marker
+    
+    map.fitBounds([ 
+        [lng, lat],
+        [data.image_lng, data.image_lat] 
+        //Make the map zoom into the users marker and the image marker
+      ], {
+        padding: {top: 30, bottom:30, left: 30, right: 30} //padding to make both markers visible
+    });
+    
+    let points_temp = localStorage.getItem('points'); 
+    localStorage.setItem("points", parseInt(data.points) + parseInt(points_temp));  
+    //updates total points
+    localStorage.setItem("imageLat", data.image_lat);
+    localStorage.setItem("imageLng", data.image_lng);
+    localStorage.setItem("UserLat", lat)
+    localStorage.setItem("UserLng", lng)
+    //save data to local storage when submit has been clicked
+    localStorage.setItem("visuals", true); 
+    //'flag' that checks if function has been called
+    document.getElementById('PointOutput').innerHTML = localStorage.getItem('points'); 
+    // change inner html to points
+    
+  })
+  .catch(function(error) {
+      // detect errors that occur
+      console.log(error);
+  });  
+  
+  
+  fetch('/stage_count', {method: "POST"}); //increment stage_count
+  document.getElementById("button_solo").onclick = NextRound; //changes function on button to NextRound
+  document.getElementById("button_solo").innerHTML = "Next Round"; // changes button text to "Next Round" when clicked
+  } 
+
+function saveData(stage) { //saves data when page refreshed
+  if (localStorage.getItem("RoundFlag")) { //if Round is being stored
+    document.getElementById("RoundOutput").innerHTML = localStorage.getItem("round");
+    console.log(`round output: ${localStorage.getItem("round")}`)
+  }
+  else {
+    document.getElementById("RoundOutput").innerHTML = 1;
+  }
+  
+  if (stage % 2 == 1) { //if user submitted guess
+    
+    if (localStorage.getItem("visuals")) { //if flag set to true -> if the visual data has been stored
+
+      let image_lat = localStorage.getItem("imageLat");
+      let image_lng = localStorage.getItem("imageLng");
+      let Userlat = localStorage.getItem("UserLat")
+      let Userlng = localStorage.getItem("UserLng") // turn the values stored locally into variables,
 
       imageMarker.setLngLat([image_lng, image_lat]); // set Imagemarker between two points
       imageMarker.addTo(map); // add marker to map
+      
+      Usermarker.setLngLat([Userlng, Userlat])
+      Usermarker.addTo(map)
 
-      line(image_lat, image_lng, lat, lng); //draws a line between the users marker and the image marker
+      line(image_lat, image_lng, Userlat, Userlng); //draws a line between the users marker and the image marker
       
       map.fitBounds([ //Make the map zoom into the users marker and the image marker
-          [lng, lat],
+          [Userlng, Userlat],
           [image_lng, image_lat] 
         ], {
           padding: {top: 30, bottom:30, left: 30, right: 30} 
       });
-    
+      console.log("condition success")
     }
-
+    
+    else {
+      console.log("condition fail")
+    }
   }
-saveData() // calls function
+
+  else {
+     console.log("stage condition fail")
+     
+  }
+}
+
 </script>
  
 
-<h2> Points: <span id = "PointOutput">  <span> </h2> 
+<h2> Points: <span id = "PointOutput">  </span> </h2> <br>
+<h2> Round: <span id = "RoundOutput"> </span>/5</h2>
 
+<script>
+if (!localStorage.getItem('pointsFlag')) { // if flag has not been initialized
+  localStorage.setItem('points', 0)     // initialise points as 0
+  localStorage.setItem('pointsFlag', true) 
+} 
+else {
+  let pointsOutput = localStorage.getItem('points')
+  document.getElementById('PointOutput').innerHTML = pointsOutput
+}
+</script>
 
   <html lang="en">
     <head>
@@ -180,36 +254,38 @@ saveData() // calls function
       zoom: 1 // Zoom level (starting zoom level)
     });
   
-    map.on('load', () => { //map is loaded
-          map.addSource('route', { // forms a line between points
-              'type': 'geojson',
-              'data': {
-                  'type': 'Feature',
-                  'properties': {},
-                  'geometry': {
-                      'type': 'LineString',
-                      'coordinates': [
-                           ] // no coordinates - so no line drawn
-                  }
-              }
-          });
-      
-          map.addLayer({ // for styling (ignore for now)
-              'id': 'route',
-              'type': 'line',
-              'source': 'route',
-              'layout': {
-                  'line-join': 'round',
-                  'line-cap': 'round'
-              },
-              'paint': {
-                  'line-color': '#888',
-                  'line-width': 8
-                
-              }
-          });
+map.on('load', () => { //map is loaded
+    map.addSource('route', { // forms a line between points
+        'type': 'geojson',
+        'data': {
+            'type': 'Feature',
+            'properties': {},
+            'geometry': {
+                'type': 'LineString',
+                'coordinates': [
+                      ] // no coordinates - so no line drawn
+            }
+        }
         
-      });
+    });
+
+
+    map.addLayer({ // for styling (ignore for now)
+        'id': 'route',
+        'type': 'line',
+        'source': 'route',
+        'layout': {
+            'line-join': 'round',
+            'line-cap': 'round'
+        },
+        'paint': {
+            'line-color': '#888',
+            'line-width': 8
+          
+        }
+    });
+  SoloButton()
+});
   function line(lat1, lng1, lat2, lng2) { //function to draw a line between two points
     map.getSource('route').setData({ 
       //gets the source of id 'route' and allows you to change the data
@@ -225,11 +301,15 @@ saveData() // calls function
       });
   }
   
-  
+
   const Usermarker = new mapboxgl.Marker()  // Create marker for user
   const imageMarker = new mapboxgl.Marker() //marker specifically for image 
-  var lat = 0 // defines coordinates as a global variable so it can be accessed in the button with function submit(lat, lng)
-  var lng = 0 // changed to variable since now the value is being changed, not created again.
+    //var lat  // defines coordinates as a global variable so it can be accessed in the button with function submit(lat, lng)
+    //var lng // changed to variable since now the value is being changed, not created again.
+    var lat = 0
+    var lng = 0
+    Usermarker.setLngLat([lng, lat]) 
+    .addTo(map);
   map.on('click', function (e) {   // When clicked on the map
     lat = e.lngLat.lat; 
     lng = e.lngLat.lng;      // storing lat long values of the click event individually
@@ -238,12 +318,7 @@ saveData() // calls function
     .addTo(map); 
         
     });
-        
-        
-  
-        
-        
-  
+    
       </script>
     </body>
     </html>
