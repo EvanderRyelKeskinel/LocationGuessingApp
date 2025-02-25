@@ -38,17 +38,23 @@ function SoloButton() { // function that will change button to submit or next ro
     var stage = data.stage
     console.log(data.stage)
     saveData(stage) // calls function that saves visuals when screen refreshed
-    if (data.stage % 2 == 0) { // if user hasn't submitted guess
-      document.getElementById("button_solo").onclick = function () { submit(lat, lng); }; 
-      document.getElementById("button_solo").innerHTML = "Submit"; // changes button text and function to submit on click
+    if (stage <= 8) {
+      if (data.stage % 2 == 0) { // if user hasn't submitted guess
+        document.getElementById("button_solo").onclick = function () { submit(lat, lng); }; 
+        document.getElementById("button_solo").innerHTML = "Submit"; // changes button text and function to submit on click
+      }
+
+      else if (data.stage % 2 == 1) { // if user has submitted guess
+        document.getElementById("button_solo").onclick = NextRound; 
+        document.getElementById("button_solo").innerHTML = "Next Round"; // changes button text and function to "Next Round" when clicked
+      } 
     }
-
-    else if (data.stage % 2 == 1) { // if user has submitted guess
-      document.getElementById("button_solo").onclick = NextRound; 
-      document.getElementById("button_solo").innerHTML = "Next Round"; // changes button text and function to "Next Round" when clicked
-  } 
-
-    });
+    else { // if at last round
+      document.getElementById("button_solo").onclick = Endgame; 
+      document.getElementById("button_solo").innerHTML = "End game";
+    }
+   
+  });
     }
     
     
@@ -148,9 +154,38 @@ function submit(lat, lng) { // defines the submit function, which takes lat long
   
   
   fetch('/stage_count', {method: "POST"}); //increment stage_count
+  if (localStorage.getItem('round') <= 4) { 
   document.getElementById("button_solo").onclick = NextRound; //changes function on button to NextRound
   document.getElementById("button_solo").innerHTML = "Next Round"; // changes button text to "Next Round" when clicked
-  } 
+  }
+  else { //if last round
+  document.getElementById("button_solo").onclick = Endgame; 
+  document.getElementById("button_solo").innerHTML = "End game"; 
+    //changes button to say "End game" and gives it the End game functionality
+  }
+
+}   
+
+function Endgame() { //defines end game function
+  fetch('/round_data', {method: "POST"})
+  //increment round
+
+  localStorage.removeItem("visuals");
+  localStorage.removeItem("imageLat");
+  localStorage.removeItem("imageLng");
+  localStorage.removeItem("UserLat");
+  localStorage.removeItem("UserLng");
+  localStorage.removeItem("visuals");
+  localStorage.removeItem("pointsFlag");
+  localStorage.removeItem("points");
+  localStorage.removeItem("round");
+  localStorage.removeItem("RoundFlag")  
+  //remove data from local storage
+
+  location.reload()
+  //reload page
+}
+
 
 function saveData(stage) { //saves data when page refreshed
   if (localStorage.getItem("RoundFlag")) { //if Round is being stored
@@ -160,7 +195,6 @@ function saveData(stage) { //saves data when page refreshed
   else {
     document.getElementById("RoundOutput").innerHTML = 1;
   }
-  
   if (stage % 2 == 1) { //if user submitted guess
     
     if (localStorage.getItem("visuals")) { //if flag set to true -> if the visual data has been stored
@@ -190,13 +224,13 @@ function saveData(stage) { //saves data when page refreshed
     else {
       console.log("condition fail")
     }
+  }  
+  else{
+    console.log('f')
+  }
   }
 
-  else {
-     console.log("stage condition fail")
-     
-  }
-}
+
 
 </script>
  

@@ -114,17 +114,17 @@ def create():
 create()
 
 #cursor.execute("""INSERT INTO 'Regions' ('Region', 'BoundingBox', 'Radius') VALUES
-#            ("Worldwide", "-180,-90,180,90", 5000),
-#            ("Ireland_AND_UK", "50.112364,-13.590088,59.160268,1.385071", 250),
-#            ("Central_Africa", "-35.243376,-17.768669,13.473103,52.161026", 2000),
- #           ("North_Africa", "13.478111,-31.902924,34.436646,34.454498", 1500),
-#            ("Europe", "37.222127,-25.845337,69.127602,44.291382", 800),
- #           ("North_Asia", "41.252516,31.102295,77.991763,189.870529", 2000),
-#            ("Central_Asia", "14.093957,44.648438,53.852527,145.722656",2000),
- #           ("SouthEast_Asia", "11.015341,92.473640,29.075375,140.449219",1400),
- #           ("North_America", "14.675268,-167.776337,84.745057,-26.799774",1800),
- #           ("South_America", "-56.946098,-99.758949,13.650324,-29.900322",2000);""" )
- #       db.commit() 
+    #            ("Worldwide", "-180,-90,180,90", 5000),
+    #            ("Ireland_AND_UK", "50.112364,-13.590088,59.160268,1.385071", 250),
+    #            ("Central_Africa", "-35.243376,-17.768669,13.473103,52.161026", 2000),
+    #           ("North_Africa", "13.478111,-31.902924,34.436646,34.454498", 1500),
+    #            ("Europe", "37.222127,-25.845337,69.127602,44.291382", 800),
+    #           ("North_Asia", "41.252516,31.102295,77.991763,189.870529", 2000),
+    #            ("Central_Asia", "14.093957,44.648438,53.852527,145.722656",2000),
+    #           ("SouthEast_Asia", "11.015341,92.473640,29.075375,140.449219",1400),
+    #           ("North_America", "14.675268,-167.776337,84.745057,-26.799774",1800),
+    #           ("South_America", "-56.946098,-99.758949,13.650324,-29.900322",2000);""" )
+    #       db.commit() 
 
 
 
@@ -296,7 +296,6 @@ def stagecount():
 @app.route('/solo', methods=['GET', 'POST']) #POST request now considered
 def solo():
     global round_count
-    
     if not('username' in session):
         return redirect(url_for('signup')) #if user not logged in, redirect to signup page
     
@@ -339,6 +338,20 @@ def solo():
                 con.commit()
                 con.close()
                 return render_template('solo.html', image=image) #show page with new image from the new round
+        
+        else: #if round => 6
+                global stage_count 
+                stage_count = 0
+                # set the stage counter to 0
+               
+                round_count = 0
+                # set the round counter to 0
+                
+                session.pop("GameID", None)
+                session.pop("points", None)
+                session.pop("latget", None)
+                session.pop("lngget", None)
+                return redirect(url_for('home')) #send to home page
 
     elif request.method == "POST": #POST request
         image = findImage() #Get current image ID
@@ -347,6 +360,8 @@ def solo():
         locations = json.loads(y.text)
         lngget = locations['computed_geometry']['coordinates'][0] #longitude of streetview image
         latget = locations['computed_geometry']['coordinates'][1] #lattitude of streetview image
+        print(latget)
+        print(lngget)
          #shows coordinates of image
         user_lat = request.args.get('lat') #lattitude that is guessed by the user 
         user_lng = request.args.get('lng') #longitude that is guessed by the user
