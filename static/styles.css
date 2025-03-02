@@ -1,0 +1,27 @@
+.title {
+  font-family: 'Work Sans', sans-serif;
+  font-weight: bold;
+  font-size: 32px;
+  color: #000000;
+  text-align: center;
+  padding: 20px;
+  background-color: #ffffff;
+} 
+  .input_form {
+      font-family: 'Work Sans', sans-serif;
+      font-weight: bold;
+      width: 50%;
+      transform: scale(1.3);
+  }
+
+  #Usernameform {
+      position: relative;
+      left: 25%;
+      top: 110px;
+      
+  }
+  #Passwordform {
+      position: relative;
+      left: 25%;
+      top: 125px;
+  }

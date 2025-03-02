@@ -1,10 +1,10 @@
-<div style="margin: 350 auto; width: 300px;"> 
-    <link rel="stylesheet" href="./static/style.css">
-<form method="POST">
-    Username: <input name="un"> <br> <br>
-    Password: <input name = "pw" type="password"> <br> <br>
-    Confirm Password: <input name = "cpw" type="password"> <br> <br>
-    <input type="submit" id="submit"> <br> 
-    <a href="/login"> login </a>
-    </form> 
-</div>
+<Body>
+<Form method="POST">    <!-- Specify POST request -->
+Username: <input name="un"> <br>   <!-- Input Username, add a line spacing -->
+Password: <input name = "pw" type="password"> <br>   <!-- Input Password, add a line spacing -->
+Confirm Password: <input name = "cpw" type="password"> <br>
+<input type="submit" id="submit" value="Sign up"> <br>   <!-- Signup button -->
+<a href="/login">Login</a>          <!-- Links to Login page -->
+</Form>
+</Body>
+<h3> {{error}} </h3>

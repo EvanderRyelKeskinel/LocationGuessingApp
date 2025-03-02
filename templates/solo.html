@@ -226,17 +226,25 @@ function saveData(stage) { //saves data when page refreshed
     }
   }  
   else{
-    console.log('f')
+    
   }
   }
 
-
+function LeaveGame() {
+  fetch('/LeaveGame', {method: "POST"}); //Set round counter to final value
+  Endgame(); //Call the endgame function which aids in ending the game
+}
 
 </script>
  
 
 <h2> Points: <span id = "PointOutput">  </span> </h2> <br>
 <h2> Round: <span id = "RoundOutput"> </span>/5</h2>
+
+
+<div class="LeaveGame" >
+  <button id="LeaveGame" onclick=LeaveGame()> Leave Game</button>
+</div>
 
 <script>
 if (!localStorage.getItem('pointsFlag')) { // if flag has not been initialized

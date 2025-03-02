@@ -1,10 +1,19 @@
-<div style="margin: 350 auto; width: 300px;"> 
 
-    <link rel="stylesheet" href="style.css">    
-<form method="POST">
-Username: <input name="un"> <br> <br>
-Password: <input name = "pw" type="password"> <br> <br>
-    <input type="submit" id="submit"> <Br> 
-     <a href="/">Sign up</a>
-    </form> 
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static',filename='styles.css') }}"> <!-- connects to styles.css --> <!-- connects to styles.css -->   
+<body>
+<div class="title"> <!-- creates div with class title -->
+Location Guesser
 </div>
+
+
+
+<Form method="POST">
+<div class="input_form" id="Usernameform">Username <input name="un"> </div> <br>   <!-- Input Username, add a line spacing -->
+<div class="input_form" id="Passwordform"> Password <input name = "pw" type="password"> </div> <br>   <!-- Input Password, add a line spacing -->
+<input type="submit" id="submit" value="Log in"> <br>  <!-- Login button -->
+<a href="/">Sign up</a>                             <!-- Links to signup page -->
+</Form>
+
+</Body>
+<h3> {{error}} </h3>

@@ -244,6 +244,8 @@ def signup():
 
 @app.route('/home')
 def home():
+    if 'GameID' in session:
+        return redirect(url_for('solo'))
     if not('username' in session):
         return redirect(url_for('signup')) #if user not logged in, redirect to signup page
     else:
@@ -305,9 +307,14 @@ def solo():
             session['GameID'] = GameID
             con = sqlite3.connect("App.db") #Connect database
             cur = con.cursor()
-
+            if 'Region' in session: #If user has clicked solo regional
+                Region_Game = session.get('Region')
+            else: 
+                Region_Game = "Worldwide" #default region setting
+            
+            
             cur.execute("""INSERT INTO Games (GameID, Mode, Region) 
-                            VALUES (?, ?, ?)""", (GameID, "SoloRanked", "Worldwide",)) 
+                            VALUES (?, ?, ?)""", (GameID, "SoloRanked", Region_Game,))
             con.commit() # fill in Games table with generated GameID and mode/region
 
             cur.execute("""INSERT INTO Attempts (GameID, Username)
@@ -319,16 +326,28 @@ def solo():
             return redirect(url_for('solo')) # reload page
         
         elif round_count < 6: #if game hasn't ended
-            image = findImage()
+            image = findImage() 
             if not(image is None):
                 return render_template('solo.html', image=image) #show page with image in round
             else:
-                base = "https://graph.mapillary.com/images?access_token=MLY|7884436731651628|991d31489dc0ba2a68fd9c321c4d2cd1&fields=id&bbox="
-                bbox = "-180,-90,180,90"  
+                API_token = "MLY|7884436731651628|991d31489dc0ba2a68fd9c321c4d2cd1"
+                base = f"https://graph.mapillary.com/images?access_token={API_token}&fields=id&bbox="
+                
+                if 'Region' in session: 
+                    con = sqlite3.connect("App.db")
+                    cur = con.cursor()
+                    value = cur.execute(f"SELECT BoundingBox FROM Regions WHERE Region=?", (session.get('Region'),)).fetchone()
+                    bbox = value [0]
+                    con.close()
+                    #Get the bounding box corresponding to the selected region in the database
+                else: 
+                    bbox = "-180,-90,180,90"  
+
                 x = requests.get(base + bbox, params={'limit': 10}) 
                 #Generate image id and limit amount of data retrieved
-                
+                print(x)
                 parsed_data = json.loads(x.text) #Turn into python dictionary
+                print(parsed_data)
                 image = parsed_data['data'][0]['id'] #Take first image ID 
                 con = sqlite3.connect("App.db")
                 cur = con.cursor()
@@ -343,14 +362,17 @@ def solo():
                 global stage_count 
                 stage_count = 0
                 # set the stage counter to 0
-               
                 round_count = 0
                 # set the round counter to 0
-                
+
+                if 'Region' in session:
+                    session.pop("Region", None)
                 session.pop("GameID", None)
                 session.pop("points", None)
                 session.pop("latget", None)
                 session.pop("lngget", None)
+                #Reset all client-side variables 
+
                 return redirect(url_for('home')) #send to home page
 
     elif request.method == "POST": #POST request
@@ -388,8 +410,34 @@ def solo():
         return render_template('solo.html', image=image, points=points) 
     else:
         raise ValueError("invalid")
-		
-		
 	
+
+
+@app.route('/SoloGamemodes', methods=['GET', 'POST']) # GET and POST request
+def sologames():
+    if 'GameID' in session:
+        return redirect(url_for('solo')) #redirects back to game if one is ongoing
+    
+    if not('username' in session): # if user not logged in redirect to signup
+        return redirect(url_for('signup'))
+    else:
+        if request.method == "POST": # if post request (data sent)
+            session['Region'] = request.form['Region']
+            return redirect(url_for('solo'))
+        else: #if get request (page loaded)
+            return render_template('SoloGamemodes.html') 
+	
+@app.route('/LeaveGame', methods=["POST"])
+def leavegame():
+    global round_count
+    if request.method == "POST": 
+        round_count = 6 #sets round to final value so python logic in /solo will end the game
+        return "."
+    else:
+        print("Error from /LeaveGame")
+        return "."
+
+
+
 if __name__ == "__main__":
     app.run(debug=True)
