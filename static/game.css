@@ -1,0 +1,23 @@
+.title {
+    font-family: 'Work Sans', sans-serif;
+    font-weight: bold;
+    font-size: 32px;
+    color: #000000;
+    text-align: center;
+    padding: 20px;
+    background-color: #ffffff;
+    transform: scale(1.2);
+  } 
+
+.button {
+ background-color: #2d5f7f;
+  color: #ffffff;
+  border-color: #2d5f7f;
+  border-radius: 5px;
+  position: relative;
+  border-style: solid;
+}
+a {
+    color:#ffffff;
+    text-decoration: none;
+}

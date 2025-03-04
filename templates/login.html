@@ -11,9 +11,9 @@ Location Guesser
 <Form method="POST">
 <div class="input_form" id="Usernameform">Username <input name="un"> </div> <br>   <!-- Input Username, add a line spacing -->
 <div class="input_form" id="Passwordform"> Password <input name = "pw" type="password"> </div> <br>   <!-- Input Password, add a line spacing -->
-<input type="submit" id="submit" value="Log in"> <br>  <!-- Login button -->
-<a href="/">Sign up</a>                             <!-- Links to signup page -->
+<div class= "input_form" id="LoginButton"><input type="submit" id="submit" value="Login"> </div><br>  <!-- Login button -->
+<div class="input_form" id="SignupLink"> <a href="/">Sign up</a> </div>                            <!-- Links to signup page -->
 </Form>
 
 </Body>
-<h3> {{error}} </h3>
+<div class="input_form" id="ErrorMessage"><h3> {{error}} </h3> </div>

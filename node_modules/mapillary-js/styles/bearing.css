@@ -1,0 +1,72 @@
+.mapillary-bearing-indicator-container {
+    bottom: 34px;
+    height: 40px;
+    pointer-events: none;
+    position: absolute;
+    right: 10px;
+    width: 40px;
+    z-index: 10;
+}
+
+.mapillary-bearing-indicator-container.mapillary-bearing-compact {
+    transform: scale(0.6);
+    bottom: 16px;
+    right: 2px;
+}
+
+.mapillary-bearing-indicator-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 40px;
+    height: 40px;
+    opacity: 0.5;
+    transform-origin: 50% 50%;
+}
+
+.mapillary-bearing-indicator-background-circle {
+    pointer-events: auto;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #000;
+}
+
+.mapillary-bearing-indicator-background-arrow-container {
+    position: absolute;
+    left: 14px;
+    top: -3.5px;
+    height: 8px;
+    width: 12px;
+    overflow: hidden;
+}
+
+.mapillary-bearing-indicator-background-arrow {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    left: 0;
+    top: 2px;
+    background-color: #000;
+    transform: rotate(45deg);
+    border-radius: 2px;
+}
+
+.mapillary-bearing-north-container {
+    position: absolute;
+    left: 16px;
+    top: -1px;
+    width: 8px;
+    height: 21px;
+    transform-origin: 50% 100%;
+}
+
+.mapillary-bearing-north {
+    position: absolute;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 4px solid white;
+}

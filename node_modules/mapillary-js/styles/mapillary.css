@@ -1,0 +1,37 @@
+.mapillary-viewer {
+    background-color: #0F0F0F;
+    position: relative;
+    overflow: hidden;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+
+.mapillary-interactive {
+    cursor: grab;
+}
+
+.mapillary-interactive:active {
+    cursor: grabbing;
+}
+
+.mapillary-viewer .mapillary-dom {
+    bottom: 0;
+    left: 0;
+    overflow: hidden;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+    top: 0;
+    user-select: none;
+}
+
+.mapillary-dom .mapillary-dom-renderer {
+    pointer-events: auto;
+}
+
+.mapillary-viewer div {
+    box-sizing: content-box;
+}
+
+.mapillary-viewer input:focus {
+    background: none;
+}

@@ -1,10 +1,18 @@
-<Body>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static',filename='styles.css') }}"> <!-- connects to styles.css --> <!-- connects to styles.css -->   
+
+<div class="title"> <!-- creates div with class title -->
+    Location Guesser
+    </div>
+
+    <Body>
+
 <Form method="POST">    <!-- Specify POST request -->
-Username: <input name="un"> <br>   <!-- Input Username, add a line spacing -->
-Password: <input name = "pw" type="password"> <br>   <!-- Input Password, add a line spacing -->
-Confirm Password: <input name = "cpw" type="password"> <br>
-<input type="submit" id="submit" value="Sign up"> <br>   <!-- Signup button -->
-<a href="/login">Login</a>          <!-- Links to Login page -->
+<div class="input_form" id="Usernameform">Username: <input name="un"> </div> <br>   <!-- Input Username, add a line spacing -->
+<div class="input_form" id="Passwordform">Password: <input name = "pw" type="password"> </div> <br>   <!-- Input Password, add a line spacing -->
+<div class="input_form" id="ConfirmPasswordform">Confirm Password: <input name = "cpw" type="password"> </div><br>
+<div class="input_form" id="SignupButton"><input type="submit" id="submit" value="Sign up"> </div><br>   <!-- Signup button -->
+<div class="input_form" id="LoginLink"><a href="/login">Login</a>  </div>        <!-- Links to Login page -->
 </Form>
 </Body>
-<h3> {{error}} </h3>
+<div class="input_form" id="ErrorMessageSignup"><h3> {{error}} </h3> </div>

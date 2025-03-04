@@ -1,3 +1,5 @@
+@import 'node_modules/bulma/css/bulma.min.css';
+
 .title {
   font-family: 'Work Sans', sans-serif;
   font-weight: bold;
@@ -6,22 +8,86 @@
   text-align: center;
   padding: 20px;
   background-color: #ffffff;
+  transform: scale(1.2);
 } 
-  .input_form {
-      font-family: 'Work Sans', sans-serif;
-      font-weight: bold;
-      width: 50%;
-      transform: scale(1.3);
-  }
+.container {
+  position: relative;
+}
 
-  #Usernameform {
-      position: relative;
-      left: 25%;
-      top: 110px;
-      
-  }
-  #Passwordform {
-      position: relative;
-      left: 25%;
-      top: 125px;
-  }
+.input_form {
+    font-family: 'Work Sans', sans-serif;
+    font-weight: bold;
+    width: 50%;
+    transform: scale(1.5);
+}
+
+#Usernameform {
+    position: relative;
+    left: 25%;
+    top: 110px;
+}
+
+#Passwordform {
+    position: relative;
+    left: 25%;
+    top: 125px;
+}
+
+#LoginButton {
+  position: relative;
+    left: 25%;
+    top: 127px;
+}
+   
+input[type=submit] { 
+  background-color: #2d5f7f;
+  color: #ffffff;
+  border-color: #2d5f7f;
+  border-radius: 5px;
+  position: relative;
+  width: 80px;
+  height: 25px;
+  border-style: solid;
+} 
+
+#SignupLink {
+  position: relative;
+    left: 12.5%;
+    top: 125px;
+    transform: scale(1);
+}
+
+#ErrorMessage {
+  position: relative;
+  left: 12.5%;
+  top: 118px;
+  transform: scale(1);
+  color: #DF2A2A;
+}
+
+#ConfirmPasswordform {
+  position: relative;
+  left: 25%;
+  top: 140px;
+}
+
+#SignupButton {
+  position: relative;
+  left: 25%;
+  top: 142px;
+}
+
+#LoginLink {
+  position: relative;
+  left: 12.5%;
+  top: 140px;
+  transform: scale(1);
+}
+#ErrorMessageSignup {
+  position: relative;
+  left: 12.5%;
+  top: 133px;
+  transform: scale(1);
+  color: #DF2A2A;
+}
+

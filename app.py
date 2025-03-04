@@ -426,7 +426,13 @@ def sologames():
             return redirect(url_for('solo'))
         else: #if get request (page loaded)
             return render_template('SoloGamemodes.html') 
-	
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.pop('username') #removes username from session
+    return redirect(url_for('signup')) # redirects to signup page
+
+
 @app.route('/LeaveGame', methods=["POST"])
 def leavegame():
     global round_count

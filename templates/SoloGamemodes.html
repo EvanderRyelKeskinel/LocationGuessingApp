@@ -1,15 +1,19 @@
-<h1>Location guesser</h1>
+
+<h1 class="title">Location guesser</h1>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static',filename='game.css') }}"> <!-- connects to styles.css --> <!-- connects to styles.css --> 
 <div style="margin: 350 auto; width: 300px;"> 
 
 <form>
-    <button type="submit"><a href="/solo">Solo Ranked </a></button>  <br> </br>
+    <button class="button" type="submit"><a href="/solo">Solo Ranked </a></button>  <br> </br>
      <br> </br>
 </form>
 
-<form method="POST">
-    <br>
+<form method="POST"> <!-- sends data through a Post request -->
+
+    <br>  
     <label for="Region"></label>
-    <button type="submit"> Solo Regional </button> 
+    <button class="button" type="submit"> Solo Regional </button> 
     <select name="Region" id="Region">
       <option value="Worldwide"> Worldwide</option>
       <option value="Ireland_AND_UK"> Ireland and UK</option>
@@ -23,8 +27,7 @@
       <option value="South_America"> South America</option>
     </select>
     <br><br>
-    
-  </form>
-    
-    
+     <!-- Creates selection box with several options -->
+  </form>  
 </div>
+ <button class="button" id="BackButton"> <a href="/home">Back</a></button> </div>

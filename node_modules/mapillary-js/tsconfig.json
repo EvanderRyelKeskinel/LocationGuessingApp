@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "declaration": true,
+    "lib": ["es6", "dom"],
+    "module": "es6",
+    "moduleResolution": "node",
+    "noImplicitAny": true,
+    "outDir": "build/esm/",
+    "sourceMap": true,
+    "target": "es6",
+    "typeRoots": ["node_modules/@types", "types"],
+    "types": [
+      "earcut",
+      "jest",
+      "node",
+      "pbf",
+      "polylabel",
+      "rbush",
+      "s2-geometry",
+      "three",
+      "virtual-dom"
+    ]
+  },
+  "include": ["src/**/*", "test/**/*"]
+}
