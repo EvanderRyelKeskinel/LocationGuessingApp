@@ -18,6 +18,11 @@
   border-style: solid;
 }
 a {
-    color:#ffffff;
-    text-decoration: none;
+color:#ffffff;
+text-decoration: none;
 }
+#BackButton {
+    width: 80px;
+    height: 25px;
+}
+#
