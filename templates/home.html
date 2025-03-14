@@ -1,14 +1,16 @@
-<h1>Location guesser</h1>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static',filename='game.css') }}"> <!-- connects to styles.css --> <!-- connects to styles.css --> 
+<h1 class="title">Location guesser</h1>
 <div style="margin: 350 auto; width: 300px;"> 
  
 
 <form>
-    <button type="submit"><a href="/SoloGamemodes">Solo </a></button>  <br> </br>
-    <button type="submit">Multiplayer</button> <br> </br>
-    <button type="submit">Leaderboard</button>
+    <button type="submit" class="button" id="Solo"><a href="/SoloGamemodes">Solo </a></button>  <br> </br>
+    <button type="submit" class="button" id="Multiplayer">Multiplayer</button> <br> </br>
+    <button type="submit" class="button" id="Leaderboard">Leaderboard</button>
     </form> 
 </div>
     
 <form action="/logout" method="POST"> <!-- creates form that sends data to /logout with POST method -->
-    <input type="submit" value="Log out" name="log_out">  <!-- Logout button -->
+    <input type="submit" class="button" id="LogOut" value="Log out" name="log_out">  <!-- Logout button -->
     </form>

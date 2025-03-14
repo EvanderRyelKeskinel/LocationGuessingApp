@@ -1,17 +1,16 @@
-<h1>Location guesser</h1>
-<div style="margin: 200 auto; width: 850px;"> 
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static',filename='game.css') }}"> <!-- connects to styles.css --> <!-- connects to styles.css -->
+<h1 class="title">Location guesser</h1>
+
+<div style="margin: 200 auto; width: 850px;"></div>
+
 <script src="https://unpkg.com/mapillary-js@4.1.2/dist/mapillary.js"></script>
 <link
   href="https://unpkg.com/mapillary-js@4.1.2/dist/mapillary.css"
   rel="stylesheet"
 />
-<div id="mly" style="width: 800px; height: 600px;"></div>
+<div id="mly"></div> <!-- Div for the image-->
 <script>
-  
-
-// Stop the form resubmission on page refresh
-
-
     var {Viewer} = mapillary;
     var viewer = new Viewer({
       accessToken: 'MLY|7884436731651628|991d31489dc0ba2a68fd9c321c4d2cd1',
@@ -19,11 +18,20 @@
       imageId: {{ image }}
     });
   </script>
- 
+ <head>
+  
+  <!--Styling applied in mapbox-->
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js"></script>
+  <!-- Div for world map -->
+  <div id="map"></div>
+
+</head>
 
  
   <body>
-  <button id="button_solo" onclick="submit(lat, lng)"> Submit </button> <!-- Create button with initial function submit -->
+  
+  <button class="button" id="button_solo" onclick="submit(lat, lng)"> Submit </button> <!-- Create button with initial function submit -->
   <script>
  
 function SoloButton() { // function that will change button to submit or next round
@@ -59,7 +67,7 @@ function SoloButton() { // function that will change button to submit or next ro
     
     
 
-  function NextRound() {
+function NextRound() {
 
     document.getElementById("button_solo").disabled = true;
     setTimeout(function(){document.getElementById("button_solo").disabled = false;},2000);
@@ -77,24 +85,25 @@ function SoloButton() { // function that will change button to submit or next ro
       localStorage.setItem('round', data.round) //Store value of round
       localStorage.setItem('RoundFlag', true )  //check if data has been saved
       document.getElementById("RoundOutput").innerHTML = data.round; //Display round
+
+      fetch('/stage_count', {method: "POST"}); //increment stage_count 
+      // by doing POST requests for both
+      
+      if (localStorage.getItem("visuals")) { //if items are in local storage
+        localStorage.removeItem("imageLat")
+        localStorage.removeItem("imageLng")
+        localStorage.removeItem("UserLat")
+        localStorage.removeItem("UserLng")
+        localStorage.removeItem("visuals")
+      }
+      //remove all values stored
+      location.reload() //reloads page
     })
     .catch(err => {
     console.log('error');
     console.log(err);
     });
     
-    fetch('/stage_count', {method: "POST"}); //increment stage_count 
-    // by doing POST requests for both
-    
-    if (localStorage.getItem("visuals")) { //if items are in local storage
-      localStorage.removeItem("imageLat")
-      localStorage.removeItem("imageLng")
-      localStorage.removeItem("UserLat")
-      localStorage.removeItem("UserLng")
-      localStorage.removeItem("visuals")
-     }
-    //remove all values stored
-     location.reload() //reloads page
     return 
   } 
 
@@ -167,9 +176,12 @@ function submit(lat, lng) { // defines the submit function, which takes lat long
 }   
 
 function Endgame() { //defines end game function
-  fetch('/round_data', {method: "POST"})
-  //increment round
-
+  
+  fetch('/round_data', {method: "POST"}) //increment round
+  .then(function(response) {
+    
+  }) 
+  .then(function(data) {
   localStorage.removeItem("visuals");
   localStorage.removeItem("imageLat");
   localStorage.removeItem("imageLng");
@@ -184,6 +196,8 @@ function Endgame() { //defines end game function
 
   location.reload()
   //reload page
+  });
+  
 }
 
 
@@ -231,20 +245,24 @@ function saveData(stage) { //saves data when page refreshed
   }
 
 function LeaveGame() {
-  fetch('/LeaveGame', {method: "POST"}); //Set round counter to final value
+  fetch('/LeaveGame', {method: "POST"}) //Set round counter to final value
+  .then(function(response) {
+    
+  })
+  .then(function(data) {
   Endgame(); //Call the endgame function which aids in ending the game
+  })
 }
 
 </script>
  
-
-<h2> Points: <span id = "PointOutput">  </span> </h2> <br>
-<h2> Round: <span id = "RoundOutput"> </span>/5</h2>
-
-
-<div class="LeaveGame" >
-  <button id="LeaveGame" onclick=LeaveGame()> Leave Game</button>
+<div id="mly">
+<h2 id="CurrentRound"> Round: <span id = "RoundOutput"> </span>/5</h2> <br>
+<h2 id="ScoredPoints"> Points: <span id = "PointOutput">  </span> </h2> 
 </div>
+
+
+  <button class="button" id="LeaveGame" onclick=LeaveGame()> Leave Game</button>
 
 <script>
 if (!localStorage.getItem('pointsFlag')) { // if flag has not been initialized
@@ -255,36 +273,7 @@ else {
   let pointsOutput = localStorage.getItem('points')
   document.getElementById('PointOutput').innerHTML = pointsOutput
 }
-</script>
 
-  <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Mapbox Example</title>
-    
-      <!-- Link to Mapbox CSS -->
-      <link href="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css" rel="stylesheet" />
-    
-      <!-- Mapbox JS -->
-      <script src="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js"></script>
-    
-      <style>
-        /* Make the map take up the entire screen */
-        #map {
-          width: 20%;
-          height: 50vh;
-          margin-right: auto;
-        }
-      </style>
-    </head>
-    <body>
-    
-  
-      <!-- Create a div to hold the map -->
-      <div id="map" style="position:absolute; right:138px; top:355px;"></div>
-    
-  <script>
     // Replace with your own Mapbox Access Token
     mapboxgl.accessToken = 'pk.eyJ1IjoiZXZhbmRlcmsiLCJhIjoiY20zYnlzOTExMW10ODJucjF4eHUyejV0YyJ9.XYDcVQ3_rJLEptvGCmIT8g';
   

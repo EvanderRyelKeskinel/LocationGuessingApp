@@ -16,13 +16,128 @@
   border-radius: 5px;
   position: relative;
   border-style: solid;
+  font-family: 'Work Sans', sans-serif;
 }
 a {
 color:#ffffff;
 text-decoration: none;
 }
 #BackButton {
+    position: relative;
+    left: 50px;
+    top: -50px;
     width: 80px;
     height: 25px;
 }
-#
+#SoloRanked {
+  position: relative;
+  left: 37%;
+  width: 100px;
+  height: 25px;
+}
+#SoloRegional {
+  position: relative;
+  left: 37%;
+  width: 105px;
+  height: 25px;
+}
+#Region {
+  font-family: 'Work Sans', sans-serif;
+  font-weight: bold;
+  position: relative;
+  left: 35%;
+  top: 5px;
+  width: 113px;
+}
+#Solo {
+  position: relative;
+  left: 35%;
+  width: 120px;
+  height: 30px;
+}
+#Multiplayer {
+  position: relative;
+  left: 35%;
+  width: 120px;
+  height: 30px;
+}
+#Leaderboard {
+  position: relative;
+  left: 35%;
+  width: 120px;
+  height: 30px;
+}
+#LogOut {
+  position: relative;
+  left: 50px;
+  top: -50px;
+  width: 80px;
+  height: 25px;
+}
+#mly {
+  position: relative;
+  width: 55%;
+  height: 60%;
+  left: -5px;
+  margin-right: auto;
+  margin-left: auto;
+  margin-top: auto;
+  margin-bottom: auto;
+  bottom: 8%;
+}
+#map {
+  position: relative;
+  left: 42%;
+  bottom: 58%;
+  width: 30%;
+  height: 50%;
+  margin-right: auto;
+  margin-left: auto;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+#button_solo {
+  position: relative;
+  text-align: center;
+  left: 42%;
+  width: 160px;
+  height: 35px;
+  bottom: 55%;
+  margin-right: auto;
+  margin-left: auto;
+  margin-top: auto;
+  margin-bottom: auto;
+  font-size: 16px;
+}
+#ScoredPoints {
+  font-family: 'Work Sans', sans-serif;
+  font-weight: bold;
+  text-align: center;
+  position: relative;
+  margin-right: auto;
+  margin-left: auto;
+  margin-top: auto;
+  margin-bottom: auto;
+  left: -6.5%;
+  bottom: 75%;
+}
+#CurrentRound {
+  font-family: 'Work Sans', sans-serif;
+  font-weight: bold;
+  text-align: center;
+  position: relative;
+  margin-right: auto;
+  margin-left: auto;
+  margin-top: auto;
+  margin-bottom: auto;
+  left: -6.5%;
+  bottom: 75%;
+}
+#LeaveGame {
+  position: relative;
+  margin-top: auto;
+  margin-bottom: auto;
+  width: 100px;
+  height: 25px;
+  bottom: 1050px;
+}

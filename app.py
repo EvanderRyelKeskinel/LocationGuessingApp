@@ -28,6 +28,8 @@ def points_calc(d):
 def findImage(): #gets image corresponding to current round number
     con = sqlite3.connect("App.db")
     cur = con.cursor()
+    round_temp = cur.execute("SELECT Round FROM Users WHERE Username=?", (session.get('Username'),)).fetchone() 
+    round_count = round_temp [0]
     image_search = cur.execute(f"SELECT Image{(round_count)} FROM Games WHERE GameID=?", (session.get('GameID'),)).fetchone()
     con.close()
     if image_search is None:
@@ -50,7 +52,9 @@ def create():
         Highest_solo INTEGER, 
         Highest_mult INTEGER, 
         Current_LobbyID TEXT,
-        InGame INTEGER, 
+        InGame INTEGER,
+        Round INTEGER NOT NULL,
+        Stage INTEGER NOT NULL,
         FOREIGN KEY(Current_LobbyID) REFERENCES Lobby(LobbyID),
         Primary Key(Username))
                        """) #Creates table 'Users', with primary and foreign keys.
@@ -113,24 +117,9 @@ def create():
         db.commit()
 create()
 
-#cursor.execute("""INSERT INTO 'Regions' ('Region', 'BoundingBox', 'Radius') VALUES
-    #            ("Worldwide", "-180,-90,180,90", 5000),
-    #            ("Ireland_AND_UK", "50.112364,-13.590088,59.160268,1.385071", 250),
-    #            ("Central_Africa", "-35.243376,-17.768669,13.473103,52.161026", 2000),
-    #           ("North_Africa", "13.478111,-31.902924,34.436646,34.454498", 1500),
-    #            ("Europe", "37.222127,-25.845337,69.127602,44.291382", 800),
-    #           ("North_Asia", "41.252516,31.102295,77.991763,189.870529", 2000),
-    #            ("Central_Asia", "14.093957,44.648438,53.852527,145.722656",2000),
-    #           ("SouthEast_Asia", "11.015341,92.473640,29.075375,140.449219",1400),
-    #           ("North_America", "14.675268,-167.776337,84.745057,-26.799774",1800),
-    #           ("South_America", "-56.946098,-99.758949,13.650324,-29.900322",2000);""" )
-    #       db.commit() 
-
-
-
 @app.route('/login', methods = ['GET', 'POST']) #Defines a route with /login with both methods
 def login():
-    if 'username' in session:
+    if 'Username' in session:
         return redirect(url_for('home'))  #directs logged in user to 
     else:
         if request.method == "POST": #POST request
@@ -177,7 +166,7 @@ def login():
                         return render_template('login.html', error=error)
                     
                     else: # when credentials do match
-                        session['username'] = request.form['un']
+                        session['Username'] = request.form['un']
                         return redirect(url_for('home'))
                         #log user in and redirect them
 
@@ -187,7 +176,7 @@ def login():
 
 @app.route('/', methods = ['GET', 'POST']) #Defines a route with just / for both POST and GET methods
 def signup():
-    if 'username' in session:
+    if 'Username' in session:
         return redirect(url_for('home')) #redirects to home if user logged in
     
     else:    
@@ -228,15 +217,16 @@ def signup():
                 con = sqlite3.connect("App.db") #Reopen the connection
                 cur = con.cursor()
                 SALT = random.randint(0, 1000000) #Generates random integer
-                cur.execute(""" INSERT INTO Users (Username, SALT, Password) 
-                        VALUES (?, ?, ?) """,
+                cur.execute(""" INSERT INTO Users (Username, SALT, Password, Round, Stage) 
+                        VALUES (?, ?, ?, 0, 0) """,
                         (request.form['un'], SALT, (sha512((request.form['pw'].encode('utf-8') + str(SALT).encode('utf-8'))).digest()))) 
                         #adds username and hashed password to database
                         #enodes the password and hash into a form that allows it to be hashed
+                        #initialises round and stage as 0
                 con.commit() #commit the SQL
                 con.close() #Close the connection
                 
-                session['username'] = request.form['un'] #make a session for the user
+                session['Username'] = request.form['un'] #create a session for the user on signup
             return redirect(url_for('home')) #redirect to home page
         
         else:  #GET request (loading in page)
@@ -246,7 +236,7 @@ def signup():
 def home():
     if 'GameID' in session:
         return redirect(url_for('solo'))
-    if not('username' in session):
+    if not('Username' in session):
         return redirect(url_for('signup')) #if user not logged in, redirect to signup page
     else:
         return render_template('home.html') #load home page
@@ -266,42 +256,59 @@ def submitsend(): #function name changed to suite functionality
 	}
     return jsonify(dictionary) #returns as JSON object
 
-round_count = 0 # initializes round outside the function
+
 
 
 @app.route('/round_data', methods=['POST']) # POST request called when new round started
 def roundcount():
-    global round_count
-    round_count = round_count + 1 # round is increased by 1
-    
+    con = sqlite3.connect("App.db")
+    cur = con.cursor()
+    round_count = cur.execute(f"SELECT Round FROM Users WHERE Username=?", (session.get('Username'),)).fetchone() [0]
+    round_temp = round_count + 1 # round is increased by 1
+    cur.execute("""UPDATE Users 
+                    SET Round = ?
+                    WHERE Username = ?""", (round_temp, session.get("Username")))
+    con.commit()
+    con.close()
     dictionary = {
-        'round': round_count # round placed in a dictionary
+        'round': round_temp # round placed in a dictionary
     }
     return jsonify(dictionary) #Turned into json object so it can be read by javascript.
 
-stage_count = 0
+
 @app.route('/stage_count', methods=['POST', 'GET'])  
 def stagecount():
-    global stage_count #makes global so it can initialised
     if request.method == "GET": # GET request
-        
+        con = sqlite3.connect("App.db")
+        cur = con.cursor()
+        stage_count = cur.execute("SELECT Stage FROM Users WHERE Username=?", (session.get('Username'),)).fetchone() [0]
+        con.close()
         dict = {
             'stage': stage_count
         } #defines a dictionary to be jsonified
         return jsonify(dict)
     
     else: # POST request 
-        stage_count = stage_count + 1 # increments by 1
-        print(stage_count)
+        con = sqlite3.connect("App.db")
+        cur = con.cursor()
+        stage_count = cur.execute("SELECT Stage FROM Users WHERE Username=?", (session.get('Username'),)).fetchone() [0]
+        cur.execute("""UPDATE Users 
+                        SET Stage = ?
+                        WHERE Username = ?""", (stage_count + 1, session.get("Username"),))
+        con.commit()
+        con.close()
         return jsonify(stage_count) 
 
 @app.route('/solo', methods=['GET', 'POST']) #POST request now considered
 def solo():
-    global round_count
-    if not('username' in session):
+    if not('Username' in session):
         return redirect(url_for('signup')) #if user not logged in, redirect to signup page
-    
     elif request.method == "GET": #Get request
+        con = sqlite3.connect("App.db")
+        cur = con.cursor()
+        stage_count = cur.execute(f"SELECT Stage FROM Users WHERE Username=?", (session.get('Username'),)).fetchone()
+        round_temp = cur.execute(f"SELECT Round FROM Users WHERE Username=?", (session.get('Username'),)).fetchone() 
+        round_count = round_temp [0]
         if round_count == 0:
             GameID = random_string = ''.join(random.choices(string.ascii_letters + string.digits, k=10)) # random 10 digit string
             session['GameID'] = GameID
@@ -318,11 +325,15 @@ def solo():
             con.commit() # fill in Games table with generated GameID and mode/region
 
             cur.execute("""INSERT INTO Attempts (GameID, Username)
-                        VALUES (?, ?)""", (GameID, session['username'],))
+                        VALUES (?, ?)""", (GameID, session['Username'],))
             con.commit() # Fill in attempts table with gameID and Username 
-            con.close()
 
-            round_count = 1 #set round_count to 1
+            cur.execute("""UPDATE Users 
+                    SET Round = ?
+                    WHERE Username = ?""", (1, session.get("Username"))) #set round_count to 1
+            con.commit()
+            con.close() 
+
             return redirect(url_for('solo')) # reload page
         
         elif round_count < 6: #if game hasn't ended
@@ -345,9 +356,7 @@ def solo():
 
                 x = requests.get(base + bbox, params={'limit': 10}) 
                 #Generate image id and limit amount of data retrieved
-                print(x)
                 parsed_data = json.loads(x.text) #Turn into python dictionary
-                print(parsed_data)
                 image = parsed_data['data'][0]['id'] #Take first image ID 
                 con = sqlite3.connect("App.db")
                 cur = con.cursor()
@@ -359,12 +368,18 @@ def solo():
                 return render_template('solo.html', image=image) #show page with new image from the new round
         
         else: #if round => 6
-                global stage_count 
-                stage_count = 0
-                # set the stage counter to 0
-                round_count = 0
-                # set the round counter to 0
-
+                con = sqlite3.connect("App.db")
+                cur = con.cursor()
+                cur.execute("""UPDATE Users 
+                                SET Round = ?
+                                WHERE Username = ?""", (0, session.get("Username"))) 
+                cur.execute("""UPDATE Users 
+                                SET Stage = ?
+                                WHERE Username = ?""", (0, session.get("Username"))) 
+                #set round_count to 0
+                # set the Stage counter to 0
+                con.commit()
+                con.close()
                 if 'Region' in session:
                     session.pop("Region", None)
                 session.pop("GameID", None)
@@ -372,7 +387,6 @@ def solo():
                 session.pop("latget", None)
                 session.pop("lngget", None)
                 #Reset all client-side variables 
-
                 return redirect(url_for('home')) #send to home page
 
     elif request.method == "POST": #POST request
@@ -382,14 +396,13 @@ def solo():
         locations = json.loads(y.text)
         lngget = locations['computed_geometry']['coordinates'][0] #longitude of streetview image
         latget = locations['computed_geometry']['coordinates'][1] #lattitude of streetview image
-        print(latget)
-        print(lngget)
          #shows coordinates of image
         user_lat = request.args.get('lat') #lattitude that is guessed by the user 
         user_lng = request.args.get('lng') #longitude that is guessed by the user
-        
         con = sqlite3.connect("App.db")
         cur = con.cursor()
+        round_temp = cur.execute(f"SELECT Round FROM Users WHERE Username=?", (session.get('Username'),)).fetchone() 
+        round_count = round_temp [0]
         cur.execute(f"""UPDATE Games
                     SET LatLong{round_count} = ?
                     WHERE GameID = ?""", (str(latget) + "," + str(lngget), session.get("GameID"))) #Store image coordinates
@@ -418,7 +431,7 @@ def sologames():
     if 'GameID' in session:
         return redirect(url_for('solo')) #redirects back to game if one is ongoing
     
-    if not('username' in session): # if user not logged in redirect to signup
+    if not('Username' in session): # if user not logged in redirect to signup
         return redirect(url_for('signup'))
     else:
         if request.method == "POST": # if post request (data sent)
@@ -429,15 +442,20 @@ def sologames():
 
 @app.route('/logout', methods=['POST'])
 def logout():
-    session.pop('username') #removes username from session
+    session.pop('Username') #removes username from session
     return redirect(url_for('signup')) # redirects to signup page
 
 
 @app.route('/LeaveGame', methods=["POST"])
 def leavegame():
-    global round_count
     if request.method == "POST": 
-        round_count = 6 #sets round to final value so python logic in /solo will end the game
+        con = sqlite3.connect("App.db")
+        cur = con.cursor()
+        cur.execute("""UPDATE Users 
+                        SET Round = ?
+                        WHERE Username = ?""", (6, session.get("Username"))) #set to 6
+        con.commit()
+        con.close()
         return "."
     else:
         print("Error from /LeaveGame")
