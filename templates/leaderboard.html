@@ -1,0 +1,71 @@
+<html>
+    <head><link rel="stylesheet" href="{{ url_for('static',filename='leaderboard.css') }}"> 
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<h1 class="title">Location Guesser</h1>
+</head><body>
+<table>
+    
+    <tr> <!--Headings for each of the collumns-->
+    <th> Rank </th>
+    <th> Username</th>
+    <th> Score</th>
+    </tr>
+   
+    <!--Rows-->
+    <tr>
+    <td class="rank">  1 </td> 
+    <td class="name" id="name0"> </td>   
+    <td class="score" id="score0"></td>
+    </tr>
+    
+    <tr>
+        <td class="rank"> 2 </td>  
+        <td class="name" id="name1"></td>      
+        <td class="score" id="score1"></td>
+    </tr>
+
+    <tr>
+        <td class="rank"> 3 </td>  
+        <td class="name" id="name2"></td>     
+        <td class="score" id="score2"></td>
+    </tr>
+
+    <tr>
+        <td class="rank"> 4 </td>   
+        <td class="name" id="name3"> </td>     
+        <td class="score" id="score3"></td>
+    </tr>
+
+
+    <tr>
+       <td class="rank"> 5 </td>   
+       <td class="name" id="name4"></td> 
+       <td class="score" id="score4"></td>
+    </tr>
+
+</table>
+<button class="button" id="BackButton"> <a href="/home">Back</a></button> </div>
+
+
+<script>
+fetch('/ranking', {method: "GET"}) 
+.then(function(response) {
+    return response.json();
+  }) 
+.then(function(data) {
+    document.getElementById("name0").innerHTML = data.name_first;
+    document.getElementById("score0").innerHTML = data.score_first;
+    document.getElementById("name1").innerHTML = data.name_second;
+    document.getElementById("score1").innerHTML = data.score_second;
+    document.getElementById("name2").innerHTML = data.name_third;
+    document.getElementById("score2").innerHTML = data.score_third;
+    document.getElementById("name3").innerHTML = data.name_fourth;
+    document.getElementById("score3").innerHTML = data.score_fourth;
+    document.getElementById("name4").innerHTML = data.name_fifth;
+    document.getElementById("score4").innerHTML = data.score_fifth;
+    //fills the values in the tables with data from backend
+  });
+</script>
+
+
+</body></html>

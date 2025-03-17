@@ -242,10 +242,28 @@ def home():
         return render_template('home.html') #load home page
 
 @app.route('/api/datapoint')
-def submitsend(): #function name changed to suite functionality
-    point_change = session.get('points')
-    image_lat = session.get('latget')
-    image_lng = session.get('lngget')
+def submitsend(): #Triggered when submit button clicked
+    
+    point_change = session.get('points') #points scored in the round
+    image_lat = session.get('latget') 
+    image_lng = session.get('lngget') 
+    #lattitude and longitude of users guess
+    
+    con = sqlite3.connect("App.db")
+    cur = con.cursor()
+    points_fetch = cur.execute("SELECT Points FROM Attempts WHERE Username=? AND GameID=?", (session.get('Username'),session.get("GameID"),)).fetchone() 
+    #fetch value of Points in game
+
+    if points_fetch != None: #If points is not null 
+        total_points = points_fetch [0] 
+        cur.execute("""UPDATE Attempts 
+                    SET Points = ?
+                    WHERE Username = ? AND GameID =?""", (total_points + point_change, session.get("Username"), session.get("GameID"),))
+        con.commit()
+        #Update points by adding the new value
+    else:
+        print("Error, Points is null in database") #Error response for debugging purposes
+    con.close()
     dictionary = {
 		'points': point_change, #points in dict
 
@@ -324,8 +342,8 @@ def solo():
                             VALUES (?, ?, ?)""", (GameID, "SoloRanked", Region_Game,))
             con.commit() # fill in Games table with generated GameID and mode/region
 
-            cur.execute("""INSERT INTO Attempts (GameID, Username)
-                        VALUES (?, ?)""", (GameID, session['Username'],))
+            cur.execute("""INSERT INTO Attempts (GameID, Username, Points)
+                        VALUES (?, ?, ?)""", (GameID, session['Username'], 0,))
             con.commit() # Fill in attempts table with gameID and Username 
 
             cur.execute("""UPDATE Users 
@@ -382,6 +400,24 @@ def solo():
                 con.close()
                 if 'Region' in session:
                     session.pop("Region", None)
+                else: #If gamemode is ranked
+                    con = sqlite3.connect("App.db")
+                    cur = con.cursor()
+                    highscore = cur.execute("SELECT Highest_solo FROM Users WHERE Username=?", (session.get('Username'),)).fetchone() [0]
+                    #users high score
+                    get_pointstotal = points_fetch = cur.execute("SELECT Points FROM Attempts WHERE Username=? AND GameID=?", (session.get('Username'),session.get("GameID"),)).fetchone() 
+                    #Users score this round
+                    if get_pointstotal != None:
+                        total_points = get_pointstotal [0]
+                        if total_points > highscore: #Check if points scored in the game is a high score
+                            cur.execute("""UPDATE Users 
+                                SET Highest_solo = ?
+                                WHERE Username = ?""", (total_points, session.get("Username")))  #Set high score to points scored
+                            con.commit()
+                    else:
+                        print("points not found")
+                    con.close()
+                
                 session.pop("GameID", None)
                 session.pop("points", None)
                 session.pop("latget", None)
@@ -461,7 +497,35 @@ def leavegame():
         print("Error from /LeaveGame")
         return "."
 
+@app.route('/leaderboard')
+def Leaderboard():
+    if not('Username' in session): # if user not logged in redirect to signup
+        return redirect(url_for('signup'))
+    else: 
+        return render_template("leaderboard.html")
 
+@app.route('/ranking')
+def ranking():
+    con = sqlite3.connect("App.db")
+    cur = con.cursor()
+    cur.execute("SELECT Highest_solo, Username from Users ORDER BY Highest_solo DESC LIMIT 10") 
+    #get ordered pair of username and high score in order of highest score
+    rows = cur.fetchall()
+    dictionary = {
+        'score_first': rows[0][0],
+        'name_first': rows[0][1],
+        'score_second': rows[1][0],
+        'name_second': rows[1][1],
+        'score_third': rows[2][0],
+        'name_third': rows[2][1],
+        'score_fourth': rows[3][0],
+        'name_fourth': rows[3][1],
+        'score_fifth': rows[4][0],
+        'name_fifth': rows[4][1],
+    } 
+    #store these values in a dictionary
+    con.close()
+    return jsonify(dictionary) 
 
 if __name__ == "__main__":
     app.run(debug=True)

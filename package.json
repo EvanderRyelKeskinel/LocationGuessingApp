@@ -1,6 +1,9 @@
 {
   "dependencies": {
     "bulma": "^1.0.3",
-    "mapillary-js": "^4.1.2"
+    "cheerio": "^1.0.0",
+    "fs": "^0.0.1-security",
+    "mapillary-js": "^4.1.2",
+    "sqlite3": "^5.1.7"
   }
 }
