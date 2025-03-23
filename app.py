@@ -156,7 +156,6 @@ def login():
                     
                     cur.execute("SELECT * FROM Users WHERE Username=? AND Password=?", (request.form['un'], Hashed_password,))
                     CredentialsMatch = len(cur.fetchall())
-                    print(CredentialsMatch)
                     #Counts number of times both credentials are matching in database
 
                     cur.close()
@@ -232,6 +231,7 @@ def signup():
         else:  #GET request (loading in page)
             return render_template('signup.html')
 
+
 @app.route('/home')
 def home():
     if 'GameID' in session:
@@ -240,6 +240,7 @@ def home():
         return redirect(url_for('signup')) #if user not logged in, redirect to signup page
     else:
         return render_template('home.html') #load home page
+
 
 @app.route('/api/datapoint')
 def submitsend(): #Triggered when submit button clicked
@@ -273,8 +274,6 @@ def submitsend(): #Triggered when submit button clicked
           # coordinates in dict
 	}
     return jsonify(dictionary) #returns as JSON object
-
-
 
 
 @app.route('/round_data', methods=['POST']) # POST request called when new round started
@@ -316,6 +315,7 @@ def stagecount():
         con.commit()
         con.close()
         return jsonify(stage_count) 
+
 
 @app.route('/solo', methods=['GET', 'POST']) #POST request now considered
 def solo():
@@ -371,11 +371,20 @@ def solo():
                     #Get the bounding box corresponding to the selected region in the database
                 else: 
                     bbox = "-180,-90,180,90"  
-
-                x = requests.get(base + bbox, params={'limit': 10}) 
-                #Generate image id and limit amount of data retrieved
-                parsed_data = json.loads(x.text) #Turn into python dictionary
-                image = parsed_data['data'][0]['id'] #Take first image ID 
+                
+                Data_in_image = False
+                while Data_in_image is False:
+                    x = requests.get(base + bbox, params={'limit': 10}) 
+                    #Generate image id and limit amount of data retrieved
+                    parsed_data = json.loads(x.text) #Turn into python dictionary
+                    image = parsed_data['data'][0]['id'] #Take first image ID 
+                    url = f"https://graph.mapillary.com/{image}?access_token={access_token}&fields=id,computed_geometry,detections.value"
+                    y = requests.get(url, params={'limit': 1}) #to get the coordinates of the generated image
+                    locations = json.loads(y.text)
+                    print("errror")
+                    if ('computed_geometry' in locations) and ('coordinates' in locations['computed_geometry']): #checks if key is in dictionary
+                        Data_in_image = True
+                        
                 con = sqlite3.connect("App.db")
                 cur = con.cursor()
                 cur.execute(f"""UPDATE Games 
@@ -430,8 +439,8 @@ def solo():
         url = f"https://graph.mapillary.com/{image}?access_token={access_token}&fields=id,computed_geometry,detections.value"
         y = requests.get(url, params={'limit': 1}) #to get the coordinates of the generated image
         locations = json.loads(y.text)
-        lngget = locations['computed_geometry']['coordinates'][0] #longitude of streetview image
-        latget = locations['computed_geometry']['coordinates'][1] #lattitude of streetview image
+        lngget = locations["computed_geometry"]["coordinates"][0] #longitude of streetview image
+        latget = locations["computed_geometry"]["coordinates"][1] #lattitude of streetview image
          #shows coordinates of image
         user_lat = request.args.get('lat') #lattitude that is guessed by the user 
         user_lng = request.args.get('lng') #longitude that is guessed by the user
@@ -451,16 +460,18 @@ def solo():
         con.close()
 
         dist = distance(latget, lngget, user_lat, user_lng) #distance between the guessed coordinates and the actual coordinates
+        print("distance: " + str(dist))
         points = points_calc(dist)
         session['latget'] = latget
         session['lngget'] = lngget #Sessions for lat and lng of image
         session['points'] = points # session defined in POST
-        print(points)
+        print("lat-long of user guess " + str(user_lat) + ", " + str(user_lng))
+        print("lat-long of generated image " + str(latget) + ", " + str(lngget))
+
         return render_template('solo.html', image=image, points=points) 
     else:
         raise ValueError("invalid")
 	
-
 
 @app.route('/SoloGamemodes', methods=['GET', 'POST']) # GET and POST request
 def sologames():
